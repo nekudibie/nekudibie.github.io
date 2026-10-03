@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+
+# Node
+node_modules/
+apps/desk/dist/*
+!apps/desk/dist/.gitkeep
+apps/desk/.vite/
+
+# Local data, secrets and logs (never commit)
+.env
+.env.*
+!.env.example
+config/local.yaml
+config/*.local.yaml
+data/
+var/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.log
+backups/
+tokens/
+*.pem
+*.key
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

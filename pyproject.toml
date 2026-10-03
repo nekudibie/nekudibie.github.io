@@ -1,0 +1,88 @@
+[project]
+name = "companion-workspace"
+version = "0.1.0"
+description = "Neku's local-first desk companion: workspace root (development install of every role)."
+requires-python = ">=3.11"
+readme = "README.md"
+license = "MIT"
+dependencies = [
+    "companion-core",
+    "companion-contracts",
+    "companion-vault",
+    "companion-api",
+    "companion-worker",
+    "companion-audio",
+    "companion-integrations",
+    "companion-tutor",
+    "companion-robotics",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "httpx>=0.27",
+]
+
+[tool.uv.workspace]
+members = [
+    "apps/api",
+    "apps/vault",
+    "apps/worker",
+    "apps/audio",
+    "packages/core",
+    "packages/contracts",
+    "packages/integrations",
+    "packages/tutor",
+    "packages/robotics",
+]
+
+[tool.uv.sources]
+companion-core = { workspace = true }
+companion-contracts = { workspace = true }
+companion-vault = { workspace = true }
+companion-api = { workspace = true }
+companion-worker = { workspace = true }
+companion-audio = { workspace = true }
+companion-integrations = { workspace = true }
+companion-tutor = { workspace = true }
+companion-robotics = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# The root project is a meta-package; it ships no code of its own.
+bypass-selection = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+filterwarnings = ["error::DeprecationWarning:companion_.*"]
+markers = [
+    "integration: talks to a real external service (skipped unless configured)",
+    "e2e: full-stack test through HTTP",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["apps/desk"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "W"]
+ignore = ["S101", "S603", "S607", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S108"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["companion_core", "companion_contracts", "companion_vault", "companion_api"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true
