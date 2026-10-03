@@ -201,10 +201,16 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 6. LLM-assisted meeting summaries are wired (JSON with verbatim-quote checks) but only the
    rule-based extractor has run here, because no model host is reachable.
 
-## Questions for Neku (answers unblock specific work; nothing else waits on them)
-1. Email provider: is Gmail the first account to connect (read-only)? If so, are you willing
-   to create a Google Cloud project with a *Desktop* OAuth client for your own use?
-2. Hue: is there a Hue Bridge? Govee: model numbers? Camera: brand/model and whether it offers
-   RTSP/ONVIF?
-3. Which rescued machine boots? (motherboard model, CPU, RAM amount) — decides whether the
-   brain is a rescued PC or needs a purchase.
+## Answers from Neku (2026-10-03)
+1. GitHub access granted; the branch is pushed.
+2. Email: Gmail, read-only. Neku asked for the OAuth client to be created for them; that
+   needs Neku's own Google account in the Cloud Console (no API or tool can do it on their
+   behalf), so the exact clicks are in docs/OPERATIONS.md#email and the code is ready to
+   accept the client id/secret.
+3. Lights: three Govee lights, models not yet read; no Hue Bridge or camera details yet.
+4. Hosts: the old machines were salvaged for parts and may not boot, so there is no confirmed
+   brain host. Plan in docs/HARDWARE.md ("Brain").
+
+## Still open
+* Govee model numbers (H6xxx on each light), camera brand/model, whether any rescued board
+  POSTs.

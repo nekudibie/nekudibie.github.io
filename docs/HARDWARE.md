@@ -9,11 +9,11 @@ Status words used here: **confirmed** (Neku has it and it is identified), **unkn
 | Item | Status | Model / markings | Notes to capture |
 |---|---|---|---|
 | Spare screen | unknown | ? | Panel size, native resolution, connector on the panel (eDP/LVDS/HDMI), whether it already has a controller board, touch (USB? which chipset?) |
-| Old laptop/desktop CPUs | unknown | ? | Exact model string from the heat spreader; socket; TDP |
+| Old laptop/desktop CPUs | unknown (loose parts; no known-booting machine) | ? | Exact model string from the heat spreader; socket; TDP. Neku: parts were salvaged, boards may not boot |
 | RAM | unknown | ? | DIMM vs SO-DIMM, DDR generation, capacity, speed |
 | Motherboards | unknown | ? | Model, socket, POST status, which RAM generation, SATA/M.2 ports, onboard video |
 | HDDs | unknown | ? | Capacity, interface, SMART health (`smartctl -a`), hours |
-| Smart lights | partly | Hue, Govee, Smart Life/Tuya | Exact models, whether a Hue Bridge exists, Govee models with LAN control |
+| Smart lights | partly | 3 x Govee lights (models unknown); Hue and Smart Life/Tuya mentioned earlier | Govee model numbers (sticker on the controller/plug) decide whether local LAN control is possible |
 | Camera | unknown | ? | Brand/model, RTSP/ONVIF support, whether cloud-only |
 | Found USB stick | **excluded** | — | Scanned and formatted, but firmware cannot be verified. Keep out of every host on the network. |
 | Laptop battery cells | **excluded** | — | Do not build a pack from unidentified cells. |
@@ -41,6 +41,13 @@ on any board that boots; paste the output into this file.
   Raspberry Pi OS Lite + a minimal Wayland kiosk is an option later.
 
 ### Brain (model host)
+* Neku's update: the old machines were already stripped for parts and may not boot, so there
+  is currently **no confirmed brain host**. Options, in order of least spend: (a) try one
+  board + CPU + matching RAM + a spare PSU on the bench first (needs a monitor, keyboard and
+  a USB stick with Ubuntu Server 24.04); if it POSTs and `deploy/scripts/check-host.sh`
+  passes, it is the brain; (b) run brain and desk on one Pi 5 8 GB with a small model only
+  (expect slow replies; measure before judging); (c) a second-hand small-form-factor PC with
+  16 GB RAM when budget allows. Nothing is bought until (a) has been tried.
 * The strongest *working* rescued x86_64 machine: needs a motherboard that POSTs, a CPU that
   fits it, RAM of the right generation, a PSU, cooling, and an SSD for the OS. A loose CPU
   alone is nothing; DIMMs cannot be added to a Pi.
@@ -62,8 +69,12 @@ on any board that boots; paste the output into this file.
 ## Smart-home coverage (be exact before claiming it)
 * **Hue:** with a Hue Bridge the HA integration is fully local. Bluetooth-only bulbs without
   a bridge are a different, weaker story.
-* **Govee:** local control exists only for specific models with "LAN Control" enabled in the
-  Govee app; others need the cloud API. List model numbers first.
+* **Govee (3 lights, models unknown):** Home Assistant core has a local Govee light
+  integration that uses Govee's LAN API, but only for the models Govee lists as LAN-capable,
+  and only after "LAN Control" is switched on for each light in the Govee Home app
+  (Settings of the device). Other models fall back to Govee's cloud API (needs an API key,
+  rate-limited). First step: read the model number (H6xxx) from each light and check it
+  against Govee's LAN API device list; record the three here.
 * **Smart Life/Tuya:** the official HA Tuya integration is cloud-dependent and not
   feature-complete; local alternatives are community projects. Decide per device.
 * **Camera:** needs RTSP/ONVIF or an HA-supported integration to appear as a camera entity;
