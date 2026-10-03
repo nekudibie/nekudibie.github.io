@@ -40,6 +40,7 @@ def cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> AppConfig:
     c.instance.data_dir = tmp_path / "data"
     c.logging.level = "WARNING"
     c.api.cors_origins = []
+    c.worker.embedded = False
     c.clients.append(ClientConfig(id="rover1", role="rover", token_sha256=hash_token(ROVER_TOKEN), memory_scopes=["shared"]))
     c.clients.append(ClientConfig(id="guest1", role="guest", token_sha256=hash_token(GUEST_TOKEN), memory_scopes=[]))
     c.clients.append(

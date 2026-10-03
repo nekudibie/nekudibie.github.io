@@ -57,6 +57,19 @@ class NoteCreate(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class SegmentIn(BaseModel):
+    """A pre-segmented piece of a source (transcript segment, page, message) with its own anchor."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    start_s: float | None = None
+    end_s: float | None = None
+    page: int | None = None
+    text: str
+    speaker: str | None = None
+
+
 class DocumentImport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -69,6 +82,7 @@ class DocumentImport(BaseModel):
     provenance: Provenance
     metadata: dict[str, Any] = Field(default_factory=dict)
     idempotency_key: str | None = Field(default=None, description="Same key + same content = same document")
+    segments: list[SegmentIn] | None = Field(default=None, description="When given, chunks follow these segments and carry time/page anchors")
 
 
 class CorrectionRequest(BaseModel):
@@ -93,6 +107,7 @@ class SearchRequest(BaseModel):
     project: str | None = None
     include_superseded: bool = False
     since: str | None = Field(default=None, description="ISO timestamp lower bound on created_at")
+    document_ids: list[str] | None = Field(default=None, description="Restrict to these documents (e.g. one meeting's transcript and summary)")
 
 
 class SearchHit(BaseModel):

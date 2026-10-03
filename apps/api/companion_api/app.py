@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -18,7 +19,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .routes import audio, conversations, health, home, me, memory, settings, structured
+from .routes import (
+    audio,
+    conversations,
+    health,
+    home,
+    jobs,
+    me,
+    meetings,
+    memory,
+    settings,
+    structured,
+)
 from .state import AppState, build_state
 
 log = get_logger("companion_api")
@@ -36,7 +48,16 @@ def create_app(cfg: AppConfig, *, state: AppState | None = None, **overrides: An
         )
         if len(st.tokens) == 0:
             log.error("no client tokens configured: every authenticated endpoint will refuse requests (see .env.example)")
+        worker_task = None
+        if cfg.worker.embedded and st.worker is not None:
+            worker_task = asyncio.create_task(st.worker.run_forever(), name="embedded-worker")
         yield
+        if worker_task is not None:
+            st.worker.stop()
+            try:
+                await asyncio.wait_for(worker_task, timeout=10)
+            except (TimeoutError, asyncio.CancelledError):
+                worker_task.cancel()
         for closer in (getattr(st.llm, "aclose", None), getattr(st.vault, "aclose", None), getattr(st.home, "aclose", None)):
             if closer:
                 await closer()
@@ -92,6 +113,8 @@ def create_app(cfg: AppConfig, *, state: AppState | None = None, **overrides: An
     app.include_router(memory.router)
     app.include_router(structured.router)
     app.include_router(audio.router)
+    app.include_router(meetings.router)
+    app.include_router(jobs.router)
     app.include_router(home.router)
     app.include_router(settings.router)
 

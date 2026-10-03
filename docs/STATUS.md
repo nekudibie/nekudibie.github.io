@@ -14,7 +14,7 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 | 2 | Home (HA adapter, allowlist, scenes, camera contract) | done against a fake HA server (tested locally); **not yet run against Neku's real Home Assistant** |
 | 3 | Memory (structured memory, retrieval evaluation, backups) | done, tested locally (retrieval evaluation and restore test included) |
 | 4 | Voice | software done and tested with fixtures; real STT/TTS adapters import-checked only; **hardware and model validation pending** |
-| 5 | Meetings | unimplemented |
+| 5 | Meetings | done, tested locally with fixture STT (persistent jobs, resumable transcription, consent-gated recording, draft actions with uncertainty) |
 | 6 | Tutor/reminders | unimplemented |
 | 7 | Personal tools (email, orders, weather, maths, MTG) | unimplemented |
 | 8 | Deployment/reliability | partly: dev script, Makefile; compose/systemd/backup scripts unimplemented |
@@ -90,6 +90,23 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   APIs and import correctly on x86_64, but **no real recognition or synthesis has run here**:
   model downloads from Hugging Face are blocked in this container.
 
+* **Persistent jobs.** `brain.db` job queue with atomic leased claims, lease expiry
+  reclaim (crash recovery), idempotent enqueue keys, exponential retry, cancellation seen
+  at the next heartbeat, a reserved slot for interactive work, audit events; embedded in
+  the API for development or run as `companion-worker`. (`tests/unit/test_jobs.py`)
+* **Meetings.** Recording starts only with an explicit consent flag (UI checkbox or desk
+  client flag); the model's `meeting_start` tool is confirmation-gated and never executes
+  from a model turn; "start recording" by voice opens the consent step. Audio arrives as
+  checksummed WAV chunks written atomically (out-of-order and corrupted chunks rejected);
+  pause/resume/stop/cancel; transcription resumes from a per-recording checkpoint after an
+  interruption without duplicating segments; transcript (with time anchors), summary,
+  decisions and draft actions are separate artefacts; owners and deadlines are only set when
+  the words support them ("soon" keeps the text, no date); ambiguous meeting names are
+  reported with dates rather than guessed; drafts become real actions only when confirmed on
+  screen. Desk client: `companion-audio --record-meeting "Title" --participants-informed`.
+  (`tests/integration/test_meetings.py`). **Fixture STT only here; the real pipeline
+  (faster-whisper on the brain) is untested until a model host exists.**
+
 ## Simulated (always labelled as fixtures)
 * Language model (`llm.provider: fixture`): pattern-based demo replies that still go through
   the real tool gateway.
@@ -108,10 +125,13 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   mirrors were used (see docs/SOURCES.md). Re-check flagged items on a normal connection.
 
 ## Known gaps / next actions
-1. Milestone 5: persistent meeting recording/transcription pipeline (worker, jobs).
+1. Milestone 6: Python tutor, restart-safe Europe/London reminders with DST tests.
 2. Token revocation without restart; rate limiting.
 3. Browser-level UI test (Playwright) for the chat flow.
 4. HLS/WebRTC camera streams (HA `camera/stream` WebSocket command) when a real camera exists.
+5. Speaker diarisation as a separate optional job (none runs today; speakers are never invented).
+6. LLM-assisted meeting summaries are wired (JSON with verbatim-quote checks) but only the
+   rule-based extractor has run here, because no model host is reachable.
 
 ## Questions for Neku (answers unblock specific work; nothing else waits on them)
 1. Email provider: is Gmail the first account to connect (read-only)? If so, are you willing

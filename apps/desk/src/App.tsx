@@ -4,7 +4,8 @@ import Chat from "./components/Chat";
 import { StateChip } from "./components/Common";
 import HomePanel from "./components/HomePanel";
 import NotesPanel from "./components/NotesPanel";
-import { JobsPanel, LearnPanel } from "./components/Placeholders";
+import JobsPanel from "./components/JobsPanel";
+import { LearnPanel } from "./components/Placeholders";
 import SettingsPanel from "./components/SettingsPanel";
 import SourcesDrawer from "./components/SourcesDrawer";
 import TranscriptPanel from "./components/TranscriptPanel";
@@ -27,6 +28,8 @@ export default function App() {
   const [sources, setSources] = useState<Source[] | null>(null);
   const [camera, setCamera] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [recording, setRecording] = useState<{ active: boolean; paused: boolean }>({ active: false, paused: false });
+  const [startIntent, setStartIntent] = useState<{ title: string } | null>(null);
 
   const setState = useCallback((s: AssistantState | ((prev: AssistantState) => AssistantState), detail?: string) => {
     setStateRaw((prev) => (typeof s === "function" ? s(prev) : s)); setStateDetail(detail);
@@ -39,10 +42,11 @@ export default function App() {
       if (e.payload.mute === false) setState("idle");
       if (e.payload.stop_speaking) setToast("Stopped.");
     } else if (e.action === "show_sources") setSources((e.payload.sources as Source[]) || []);
-    else if (e.action === "open_panel") setTab(String(e.payload.panel) as Tab);
+    else if (e.action === "open_panel") { setTab(String(e.payload.panel) as Tab); if (e.payload.intent === "start_recording") setStartIntent({ title: String(e.payload.title || "") }); }
+    else if (e.action === "set_recording_indicator") setRecording({ active: !!e.payload.active, paused: !!e.payload.paused });
   }, [setState, setTab]);
 
-  const effectiveState: AssistantState = conn.phase === "unreachable" || !conn.browserOnline ? "offline" : state;
+  const effectiveState: AssistantState = conn.phase === "unreachable" || !conn.browserOnline ? "offline" : recording.active && state === "idle" ? "recording" : state;
   const can = (p: string) => !!conn.me?.permissions.includes(p);
   const unconfigured = conn.phase === "unconfigured" || conn.phase === "unauthorised";
 
@@ -53,6 +57,7 @@ export default function App() {
         <span className="clock-small">{now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
         <StateChip state={effectiveState} detail={stateDetail} />
         {conn.llmOffline && <span className="badge bad" title="Ollama is not reachable; deterministic commands still work">model offline</span>}
+        {recording.active && <span className="badge bad" title="A meeting recording is in progress">● {recording.paused ? "paused" : "REC"}</span>}
         <span className="spacer" />
         <nav className="nav" aria-label="Sections">{TABS.map((t) => <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => setTab(t.id)}>{t.label}</button>)}</nav>
       </header>
@@ -80,7 +85,7 @@ export default function App() {
         {tab === "notes" && conn.phase === "ok" && <NotesPanel canWrite={can("memory.write")} canDelete={can("memory.delete")} />}
         {tab === "transcript" && conn.phase === "ok" && <TranscriptPanel onOpen={(id) => { setConversationId(id); setTab("chat"); }} />}
         {tab === "learn" && <LearnPanel />}
-        {tab === "jobs" && <JobsPanel />}
+        {tab === "jobs" && conn.phase === "ok" && <JobsPanel canRecord={can("meeting.record")} onRecordingState={(a, p) => setRecording({ active: a, paused: p })} startIntent={startIntent} />}
         {tab === "settings" && <SettingsPanel conn={conn} />}
         {tab !== "settings" && tab !== "learn" && tab !== "jobs" && conn.phase === "checking" && <p className="muted">Connecting…</p>}
       </main>

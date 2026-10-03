@@ -57,6 +57,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--wake-threshold", type=float, default=0.6)
     parser.add_argument("--no-speak", action="store_true", help="print replies, do not play TTS")
     parser.add_argument("--new-conversation", action="store_true")
+    parser.add_argument("--record-meeting", metavar="TITLE", help="record a meeting in 20 s chunks (Enter stops); requires --participants-informed")
+    parser.add_argument("--participants-informed", action="store_true", help="confirm everyone present knows the meeting is being recorded")
+    parser.add_argument("--route", choices=["personal", "employer_approved"], default="personal")
+    parser.add_argument("--chunk-seconds", type=float, default=20.0)
     args = parser.parse_args(argv)
 
     load_env_file(repo_root() / ".env")
@@ -79,6 +83,24 @@ def main(argv: list[str] | None = None) -> int:
 
     async def run() -> int:
         try:
+            if args.record_meeting is not None:
+                if not args.participants_informed:
+                    print("error: add --participants-informed once everyone present has been told. Recording refused.", file=sys.stderr)
+                    return 2
+                from .meeting import MeetingUploader
+
+                up = MeetingUploader(args.api, token, capture, chunk_seconds=args.chunk_seconds)
+                rid = await up.start(args.record_meeting, participants_informed=True, route=args.route)
+                print(f"● RECORDING {rid} ({args.record_meeting}). Press Enter to stop.")
+                loop = asyncio.get_running_loop()
+                task = asyncio.create_task(up.run())
+                if not args.simulate:
+                    await loop.run_in_executor(None, sys.stdin.readline)
+                    up.request_stop()
+                stats = await task
+                await up.aclose()
+                print(f"stopped: {stats.chunks_sent} chunk(s), {stats.bytes_sent} bytes, {stats.retries} retries. Transcription is queued on the brain.")
+                return 0
             if args.simulate:
                 client.press_ptt()
                 client.release_ptt()

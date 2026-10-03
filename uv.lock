@@ -369,6 +369,7 @@ dependencies = [
     { name = "companion-robotics" },
     { name = "companion-tutor" },
     { name = "companion-vault" },
+    { name = "companion-worker" },
     { name = "fastapi" },
     { name = "python-multipart" },
     { name = "uvicorn" },
@@ -382,6 +383,7 @@ requires-dist = [
     { name = "companion-robotics", editable = "packages/robotics" },
     { name = "companion-tutor", editable = "packages/tutor" },
     { name = "companion-vault", editable = "apps/vault" },
+    { name = "companion-worker", editable = "apps/worker" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "python-multipart", specifier = ">=0.0.9" },
     { name = "uvicorn", specifier = ">=0.30" },
@@ -439,6 +441,7 @@ source = { editable = "packages/integrations" }
 dependencies = [
     { name = "companion-contracts" },
     { name = "companion-core" },
+    { name = "companion-vault" },
     { name = "httpx" },
 ]
 
@@ -457,6 +460,7 @@ wakeword = [
 requires-dist = [
     { name = "companion-contracts", editable = "packages/contracts" },
     { name = "companion-core", editable = "packages/core" },
+    { name = "companion-vault", editable = "apps/vault" },
     { name = "faster-whisper", marker = "extra == 'stt'", specifier = ">=1.1" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "openwakeword", marker = "extra == 'wakeword'", specifier = ">=0.6" },

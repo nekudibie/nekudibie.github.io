@@ -34,9 +34,14 @@ class Route:
     ui_events: list[dict[str, Any]] = field(default_factory=list)
 
 
+_REC_START = re.compile(r"^\s*(?:start|begin)\s+(?:a\s+)?recording(?:\s+(?:this|the)\s+meeting)?(?:\s+called\s+(.+?))?\s*[.!]*\s*$", re.I)
+_REC_CTL = re.compile(r"^\s*(stop|pause|resume|end|finish)\s+(?:the\s+)?recording(?:\s+(?:this|the)\s+meeting)?\s*[.!]*\s*$", re.I)
+
+
 class DeterministicRouter:
-    def __init__(self, home: HomeAccess) -> None:
+    def __init__(self, home: HomeAccess, recordings: Any = None) -> None:
         self.home = home
+        self.recordings = recordings
 
     async def match(self, text: str, identity: ClientIdentity) -> Route | None:
         t = text.strip()
@@ -54,6 +59,18 @@ class DeterministicRouter:
                          ui_events=[{"action": "notify", "payload": {"mute": muted, "software_only": True}}])
         if _TIME.match(t):
             return Route(kind="tool", tool="clock_now", args={})
+        m = _REC_START.match(t)
+        if m:
+            title = (m.group(1) or "").strip()
+            return Route(
+                kind="reply",
+                reply="Before I record, confirm on the Jobs page that everyone present knows this meeting is being recorded. The record button is there.",
+                ui_events=[{"action": "open_panel", "payload": {"panel": "jobs", "intent": "start_recording", "title": title, "requires_consent": True}}],
+            )
+        m = _REC_CTL.match(t)
+        if m:
+            action = {"stop": "stop", "end": "stop", "finish": "stop", "pause": "pause", "resume": "resume"}[m.group(1).lower()]
+            return Route(kind="tool", tool="meeting_control", args={"action": action})
         if not self.home.enabled:
             return None
 

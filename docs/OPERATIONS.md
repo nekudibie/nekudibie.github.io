@@ -32,6 +32,19 @@ immediately after restart.
   MJPEG proxy with a 60-second ticket from `POST /v1/home/cameras/{id}/stream-ticket`. HA
   credentials never reach the browser.
 
+## Jobs and meetings
+* `uv run companion-worker list` shows recent jobs and counts; `retry <job_id>` /
+  `cancel <job_id>` act on one. In development the worker runs inside the API
+  (`worker.embedded: true`); on real hosts run `companion-worker run` as its own service.
+* A crashed worker leaves jobs with an expired lease; they are re-queued automatically with
+  their attempt count intact. Transcription resumes from the last completed chunk.
+* Meeting audio lives under `data/brain/media/recordings/<id>/chunk_*.wav`; transcripts and
+  summaries are vault documents (`meeting_transcript`, `meeting_summary`). Deleting a recording
+  (`DELETE /v1/meetings/{id}`) removes the audio, segments and both documents; backups rotate
+  on their own schedule.
+* Employer material: use the `employer_approved` route only where recording is permitted by
+  the employer; the route is stored with the recording so it can be audited.
+
 ## Secure access
 * Keep `api.host: 127.0.0.1` unless the desk is another machine. For LAN access either:
   * put the API behind a reverse proxy with TLS (Caddy with an internal CA is the simplest), or

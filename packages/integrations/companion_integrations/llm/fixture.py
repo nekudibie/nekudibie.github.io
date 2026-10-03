@@ -115,7 +115,11 @@ class FixtureProvider:
             day = "tomorrow" if "tomorrow" in user.lower() else ("week" if "week" in user.lower() else "today")
             return ToolCall(id=new_id("call"), name="weather_forecast", arguments={"day": day})
         if _MEETING_ACTION_RE.search(user) and _tool_available(tools, "meeting_query"):
-            return ToolCall(id=new_id("call"), name="meeting_query", arguments={"query": user[:300]})
+            args: dict[str, Any] = {"query": user[:300]}
+            nm = re.search(r"\bfrom (?:the |my |our )?(.+?) (?:meeting|sync|call|standup|retro)\b", user, re.I)
+            if nm:
+                args["meeting"] = nm.group(1).strip()
+            return ToolCall(id=new_id("call"), name="meeting_query", arguments=args)
         mm = _MATHS_RE.search(user)
         if mm and _tool_available(tools, "maths") and re.search(r"[0-9=+\-*/^]", mm.group(2)):
             task = {"solve": "solve", "simplify": "simplify", "differentiate": "differentiate", "integrate": "integrate"}.get(
@@ -168,7 +172,26 @@ class FixtureProvider:
         if tool_name == "maths":
             return str(data.get("explanation") or data.get("result") or "I couldn't work that out.")
         if tool_name == "meeting_query":
-            return str(data.get("answer") or "I couldn't find that in your meetings.")
+            if data.get("ambiguous"):
+                opts = "; ".join(f"{c['title']} on {c['date']}" for c in data.get("candidates", []))
+                return f"I found more than one meeting with that name: {opts}. Which one do you mean?"
+            acts = data.get("actions") or []
+            if acts:
+                parts = []
+                for a in acts[:3]:
+                    owner = f"owner {a['owner']}" if a.get("owner_known") else "owner not stated"
+                    due = f", due {a['due_text']}" if a.get("due_text") else ", no deadline stated"
+                    parts.append(f"{a['title']} ({owner}{due}) [{a['label']}]")
+                when = f" from {acts[0].get('meeting')} on {acts[0].get('meeting_date')}" if acts[0].get("meeting") else ""
+                return f"Draft actions{when}: " + "; ".join(parts) + ". These are unconfirmed until you accept them."
+            hits = data.get("hits") or []
+            if hits:
+                return f"From the transcript: “{hits[0]['snippet']}” [{hits[0]['label']}]"
+            if data.get("meetings"):
+                return "I found the meeting but nothing in it matched that question."
+            return "I have no recorded meetings matching that."
+        if tool_name == "meeting_control":
+            return f"Recording {data.get('status')}." if data.get("status") else "Done."
         return f"Done ({tool_name}): {json.dumps(data)[:300]}"
 
     def _fallback(self, user: str) -> str:

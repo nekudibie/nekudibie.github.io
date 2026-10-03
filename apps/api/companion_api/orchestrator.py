@@ -177,6 +177,8 @@ class Orchestrator:
             return
         if route.kind == "reply":
             collected.text = route.reply or ""
+            for ev in route.ui_events:
+                yield UIEvent(**ev)
             yield TokenEvent(text=collected.text)
             return
         assert route.tool

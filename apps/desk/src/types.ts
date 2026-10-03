@@ -48,3 +48,8 @@ export interface Me { client_id: string; role: string; label: string; permission
 
 export interface Fact { id: string; subject: string; predicate: string; value: string; status: string; confidence: number; trust: string; evidence_quote?: string | null; evidence_message_id?: string | null; valid_from?: string | null; created_at: string; confirmed_at?: string | null; supersedes_id?: string | null }
 export interface Decision { id: string; project_name?: string | null; statement: string; rationale: string; status: string; decided_at: string; supersedes_id?: string | null }
+
+export interface Job { id: string; kind: string; status: string; priority: number; progress: number; progress_note?: string | null; error?: string | null; created_at: string; finished_at?: string | null; payload: Record<string, unknown>; attempts: number }
+export interface Recording { id: string; title: string; status: string; started_at: string; stopped_at?: string | null; chunk_count: number; audio_ms: number; paused_total_ms: number; transcript_document_id?: string | null; summary_document_id?: string | null; error?: string | null; route: string }
+export interface Segment { id: string; start_ms: number; end_ms: number; text: string; speaker?: string | null; confidence?: number | null }
+export interface ActionItem { id: string; title: string; owner?: string | null; owner_confidence: number; due_at?: string | null; due_text?: string | null; due_confidence: number; status: string; source_quote?: string | null; meeting_id?: string | null }

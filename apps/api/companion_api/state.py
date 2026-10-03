@@ -10,17 +10,15 @@ from companion_core.auth import Permission, TokenStore
 from companion_core.clock import Clock, SystemClock
 from companion_core.config import AppConfig
 from companion_core.db import Database
-from companion_core.errors import ConfigError
 from companion_core.logging import get_logger
+from companion_integrations.factory import build_home, build_llm, build_stt, build_tts, build_vault
 from companion_integrations.home.base import HomeProvider
-from companion_integrations.home.fixture import FixtureHomeProvider
 from companion_integrations.llm.base import LLMProvider
-from companion_integrations.llm.fixture import FixtureProvider
-from companion_integrations.llm.ollama import OllamaProvider
 from companion_integrations.speech.base import STTProvider, TTSProvider
-from companion_integrations.speech.fixture import FixtureSTT, FixtureTTS
-from companion_vault.client import HttpVaultClient, LocalVaultClient, VaultClient
-from companion_vault.service import VaultService
+from companion_vault.client import VaultClient
+from companion_worker.queue import JobQueue
+from companion_worker.recordings import RecordingStore
+from companion_worker.scheduler import SchedulerStore
 
 from .store import ConversationStore
 
@@ -38,6 +36,10 @@ class AppState:
     clock: Clock
     stt: STTProvider | None = None
     tts: TTSProvider | None = None
+    queue: Any = None
+    recordings: Any = None
+    scheduler: Any = None
+    worker: Any = None
     warnings: list[str] = field(default_factory=list)
     started_at: float = field(default_factory=time.time)
     perm: type[Permission] = Permission
@@ -50,60 +52,6 @@ class AppState:
 
     def uptime_s(self) -> int:
         return int(time.time() - self.started_at)
-
-
-def build_llm(cfg: AppConfig) -> LLMProvider:
-    if cfg.llm.provider == "ollama":
-        return OllamaProvider(
-            cfg.llm.base_url, cfg.llm.model, timeout_s=cfg.llm.timeout_s, connect_timeout_s=cfg.llm.connect_timeout_s,
-            keep_alive=cfg.llm.keep_alive, num_ctx=cfg.llm.num_ctx, temperature=cfg.llm.temperature, think=cfg.llm.think,
-        )
-    return FixtureProvider()
-
-
-def build_home(cfg: AppConfig) -> HomeProvider | None:
-    if cfg.home.provider == "disabled":
-        return None
-    if cfg.home.provider == "home_assistant":
-        from companion_integrations.home.home_assistant import HomeAssistantProvider
-
-        token = cfg.secret(cfg.home.token_env)
-        if not token:
-            raise ConfigError(f"home.provider is home_assistant but {cfg.home.token_env} is not set")
-        return HomeAssistantProvider(cfg.home.base_url, token, timeout_s=cfg.home.timeout_s)
-    return FixtureHomeProvider()
-
-
-def build_stt(cfg: AppConfig) -> STTProvider | None:
-    if cfg.stt.provider == "disabled":
-        return None
-    if cfg.stt.provider == "faster_whisper":
-        from companion_integrations.speech.faster_whisper_stt import FasterWhisperSTT
-
-        return FasterWhisperSTT(cfg.stt.model, device=cfg.stt.device, compute_type=cfg.stt.compute_type, cpu_threads=cfg.stt.cpu_threads,
-                                download_root=cfg.data_dir / "models" / "whisper", language=cfg.stt.language, max_audio_s=cfg.stt.max_audio_s)
-    return FixtureSTT()
-
-
-def build_tts(cfg: AppConfig) -> TTSProvider | None:
-    if cfg.tts.provider == "disabled":
-        return None
-    if cfg.tts.provider == "piper":
-        from companion_integrations.speech.piper_tts import PiperTTS
-
-        return PiperTTS(cfg.tts.voice, cfg.tts_voices_dir, length_scale=cfg.tts.length_scale)
-    return FixtureTTS()
-
-
-def build_vault(cfg: AppConfig) -> VaultClient:
-    if cfg.vault.mode == "remote":
-        token = cfg.vault_service_token()
-        if not token:
-            raise ConfigError(f"vault.mode is remote but {cfg.vault.token_env} is not set")
-        return HttpVaultClient(cfg.vault.url, token, timeout_s=cfg.vault.timeout_s)
-    svc = VaultService(Database(cfg.vault_db_path), chunk_chars=cfg.vault.chunk_chars, chunk_overlap_chars=cfg.vault.chunk_overlap_chars)
-    svc.migrate()
-    return LocalVaultClient(svc)
 
 
 def build_state(cfg: AppConfig, **overrides: Any) -> AppState:
@@ -124,6 +72,9 @@ def build_state(cfg: AppConfig, **overrides: Any) -> AppState:
         tts=overrides["tts"] if "tts" in overrides else build_tts(cfg),
         warnings=warnings,
     )
+    state.queue = JobQueue(store.db, state.clock)
+    state.recordings = RecordingStore(store.db, cfg.media_dir, state.clock)
+    state.scheduler = SchedulerStore(store.db, state.clock)
     if state.stt is not None:
         state.extras["stt"] = state.stt
     if state.tts is not None:
@@ -142,5 +93,17 @@ def wire_up(state: AppState) -> None:
     state.home_access = HomeAccess(state.config, state.home)
     state.gateway = ToolGateway(state)
     register_builtin(state.gateway)
-    state.router = DeterministicRouter(state.home_access)
+    state.router = DeterministicRouter(state.home_access, recordings=state.recordings)
     state.orchestrator = Orchestrator(state)
+    state.worker = build_worker(state)
+
+
+def build_worker(state: AppState) -> Any:
+    """The job runner; started by the API lifespan only when worker.embedded is true."""
+    from companion_worker.handlers import HANDLERS
+    from companion_worker.runner import Worker
+    from companion_worker.services import WorkerServices
+
+    services = WorkerServices(config=state.config, vault=state.vault, stt=state.stt, llm=state.llm, recordings=state.recordings, queue=state.queue, clock=state.clock, scheduler=state.scheduler)
+    cfg = state.config.worker
+    return Worker(state.queue, HANDLERS, services, concurrency=cfg.concurrency, poll_interval_s=cfg.poll_interval_s, lease_s=cfg.lease_s, periodic=[state.scheduler.tick])

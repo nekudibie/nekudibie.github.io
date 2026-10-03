@@ -46,7 +46,7 @@ class ToolCallEvent(_Event):
     call_id: str
     name: str
     arguments: dict[str, Any] = Field(default_factory=dict)
-    status: Literal["validated", "invalid", "denied", "unknown_tool"]
+    status: Literal["validated", "invalid", "denied", "unknown_tool", "needs_confirmation"]
     reason: str | None = None
 
 

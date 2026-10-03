@@ -1,1 +1,1 @@
-"""Part of Neku's companion monorepo."""
+"""Persistent jobs, schedules and the meeting pipeline."""

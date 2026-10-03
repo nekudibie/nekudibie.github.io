@@ -1,4 +1,4 @@
-import type { Decision, Dependency, Doc, Entity, CameraView, Fact, Me, Message, SearchHit, StreamEvent } from "./types";
+import type { ActionItem, Decision, Dependency, Doc, Entity, CameraView, Fact, Job, Me, Message, Recording, SearchHit, Segment, StreamEvent } from "./types";
 
 const LS_URL = "companion.apiUrl";
 const LS_TOKEN = "companion.token";
@@ -61,6 +61,20 @@ export const api = {
   retractFact: (id: string, reason = "") => req<Fact>(`/v1/memory/facts/${id}/retract`, { method: "POST", body: JSON.stringify({ reason }) }),
   updateFact: (id: string, value: string, reason = "") => req<Fact>(`/v1/memory/facts/${id}/update`, { method: "POST", body: JSON.stringify({ value, reason }) }),
   decisions: () => req<Decision[]>("/v1/memory/decisions"),
+  jobs: () => req<{ jobs: Job[]; counts: Record<string, number>; worker_embedded: boolean }>("/v1/jobs"),
+  cancelJob: (id: string) => req<Job>(`/v1/jobs/${id}/cancel`, { method: "POST" }),
+  retryJob: (id: string) => req<Job>(`/v1/jobs/${id}/retry`, { method: "POST" }),
+  meetings: () => req<Recording[]>("/v1/meetings"),
+  meeting: (id: string) => req<{ recording: Recording; chunks: number; segments: number; jobs: Job[]; actions: ActionItem[] }>(`/v1/meetings/${id}`),
+  meetingSegments: (id: string) => req<Segment[]>(`/v1/meetings/${id}/segments`),
+  startMeeting: (title: string, participants_informed: boolean, route: string) => req<Recording>("/v1/meetings", { method: "POST", body: JSON.stringify({ title, participants_informed, route }) }),
+  meetingControl: (id: string, action: "pause" | "resume" | "stop" | "cancel" | "retry") => req<unknown>(`/v1/meetings/${id}/${action}`, { method: "POST" }),
+  confirmAction: (meetingId: string, actionId: string, body: { owner?: string; due_at?: string }) => req<ActionItem>(`/v1/meetings/${meetingId}/actions/${actionId}/confirm`, { method: "POST", body: JSON.stringify(body) }),
+  putChunk: async (id: string, seq: number, wav: Blob, sha256: string) => {
+    const res = await fetch(`${getBaseUrl()}/v1/meetings/${id}/chunks/${seq}`, { method: "PUT", headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "audio/wav", "X-Content-SHA256": sha256 }, body: wav });
+    if (!res.ok) { let msg = res.statusText; try { msg = (await res.json())?.error?.message || msg; } catch { /* ignore */ } throw new ApiError(res.status, "chunk", msg); }
+    return res.json();
+  },
   entities: () => req<Entity[]>("/v1/home/entities"),
   homeStatus: () => req<{ enabled: boolean; provider: string | null; is_fixture: boolean }>("/v1/home/status"),
   command: (entity_id: string, action: string, extra: Record<string, unknown> = {}) =>

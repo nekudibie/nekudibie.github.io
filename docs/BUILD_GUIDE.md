@@ -97,6 +97,14 @@ Where things run: `companion-audio` on the desk Pi (capture/playback via ALSA `a
    `press_ptt()` / `release_ptt()` from a small gpiozero script; drive an LED from the
    `on_state` callback so "listening"/"speaking" is visible without the screen.
 
+## Stage 4b: meetings
+
+From the desk Pi: `uv run companion-audio --api http://<brain>:8710 --record-meeting "Weekly sync" --participants-informed`
+(Enter stops). From the browser on localhost/HTTPS the Jobs page records with the consent
+box. Transcription needs `stt.provider: faster_whisper` on the brain; progress shows on the
+Jobs page, results under the meeting entry. Expect several minutes per hour of audio on a
+CPU-only brain with the `base` model; measure and record the figure in docs/STATUS.md.
+
 ## Stage 5: split the vault onto its own host
 
 Set `vault.mode: remote`, `vault.url`, generate `COMPANION_VAULT_TOKEN` on both hosts, run

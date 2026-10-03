@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from companion_contracts.common import Source
+from companion_contracts.common import Anchor, Source
 from companion_contracts.tools import (
     CameraShowArgs,
     ClockNowArgs,
@@ -14,6 +14,9 @@ from companion_contracts.tools import (
     FactRememberArgs,
     HomeControlArgs,
     HomeStateArgs,
+    MeetingControlArgs,
+    MeetingQueryArgs,
+    MeetingStartArgs,
     MemoryCorrectArgs,
     MemorySaveArgs,
     MemorySearchArgs,
@@ -203,7 +206,95 @@ async def camera_show(ctx: ToolContext, args: CameraShowArgs) -> ToolResult:
     )
 
 
+# -- meetings ------------------------------------------------------------------------
+async def meeting_start(ctx: ToolContext, args: MeetingStartArgs) -> ToolResult:
+    """Only reachable from non-model routes (the gateway blocks it from the LLM until confirmed on screen)."""
+    if not args.participants_informed:
+        return ToolResult(ok=False, content=json.dumps({"error": "participants must be informed before recording"}), summary="recording refused: consent not confirmed", error_code="validation_failed")
+    rec = ctx.state.recordings.create(client_id=ctx.identity.client_id, title=args.title, participants_informed=True)
+    return ToolResult(content=json.dumps({"recording_id": rec.id, "status": rec.status}), summary=f"recording started ({rec.title or rec.id})",
+                      data={"recording_id": rec.id}, ui_events=[{"action": "set_recording_indicator", "payload": {"active": True, "recording_id": rec.id}}])
+
+
+async def meeting_control(ctx: ToolContext, args: MeetingControlArgs) -> ToolResult:
+    rec = ctx.state.recordings.active_for(ctx.identity.client_id)
+    if rec is None:
+        return ToolResult(ok=False, content=json.dumps({"error": "no recording is in progress"}), summary="no recording in progress", error_code="not_found")
+    if args.action == "pause":
+        rec = ctx.state.recordings.pause(rec.id)
+        summary = "recording paused"
+    elif args.action == "resume":
+        rec = ctx.state.recordings.resume(rec.id)
+        summary = "recording resumed"
+    else:
+        rec = ctx.state.recordings.stop(rec.id)
+        from companion_worker.queue import BACKGROUND
+
+        ctx.state.queue.enqueue("transcribe_recording", {"recording_id": rec.id, "client_id": ctx.identity.client_id}, idempotency_key=f"transcribe:{rec.id}", priority=BACKGROUND, client_id=ctx.identity.client_id)
+        summary = "recording stopped; transcription queued"
+    active = rec.status in {"recording", "paused"}
+    return ToolResult(content=json.dumps({"recording_id": rec.id, "status": rec.status}), summary=summary, data={"recording_id": rec.id, "status": rec.status},
+                      ui_events=[{"action": "set_recording_indicator", "payload": {"active": active, "paused": rec.status == "paused", "recording_id": rec.id}}])
+
+
+async def meeting_query(ctx: ToolContext, args: MeetingQueryArgs) -> ToolResult:
+    """Find actions/decisions/transcript passages from meetings; ambiguity is reported, not guessed."""
+    recs = ctx.state.recordings.list(client_id=ctx.identity.client_id, limit=200)
+    done = [r for r in recs if r.status in {"done", "processing", "stopped", "failed"}]
+    if args.meeting:
+        matches = ctx.state.recordings.find_by_title(ctx.identity.client_id, args.meeting)
+        if not matches:
+            names = [f"{r.title or '(untitled)'} ({r.started_at[:10]})" for r in done[:8]]
+            return ToolResult(ok=False, content=json.dumps({"error": f"no meeting matching {args.meeting!r}", "known_meetings": names}), summary="meeting not found", error_code="not_found", data={"known_meetings": names})
+        if len(matches) > 1:
+            cands = [{"recording_id": r.id, "title": r.title, "date": r.started_at[:10]} for r in matches]
+            return ToolResult(content=json.dumps({"ambiguous": True, "candidates": cands, "hint": "ask which date"}), summary=f"{len(matches)} meetings match; asking which", data={"ambiguous": True, "candidates": cands})
+        targets = matches
+    else:
+        targets = done
+    if not targets:
+        return ToolResult(content=json.dumps({"count": 0, "note": "no finished meetings yet"}), summary="no meetings recorded", data={"count": 0})
+    target_ids = [r.id for r in targets]
+    actions = []
+    for rid in target_ids[:20]:
+        actions += await ctx.state.vault.list_actions(scopes=ctx.identity.memory_scopes, meeting_id=rid)
+    sources = []
+    doc_ids = [d for r in targets for d in (r.transcript_document_id, r.summary_document_id) if d]
+    hits_payload = []
+    if doc_ids:
+        res = await ctx.state.vault.search(SearchRequest(query=args.query, limit=5, document_ids=doc_ids), scopes=ctx.identity.memory_scopes)
+        for i, h in enumerate(res.hits, start=1):
+            src = h.to_source(f"S{i}")
+            sources.append(src)
+            hits_payload.append({"label": src.label, "title": h.title, "snippet": h.snippet, "start_time_s": h.anchor.start_time_s, "segment_id": h.anchor.segment_id, "document_id": h.document_id})
+    by_rec = {r.id: r for r in targets}
+    actions_payload = []
+    for a in actions:
+        n = len(sources) + 1
+        rec = by_rec.get(a.meeting_id or "")
+        sources.append(Source(label=f"S{n}", document_id=a.source_document_id or a.id, title=f"Action from {rec.title if rec else 'meeting'}", snippet=a.source_quote or a.title,
+                              source_type="action", anchor=Anchor(kind="segment", segment_id=a.source_segment_id) if a.source_segment_id else None, captured_at=a.created_at))
+        actions_payload.append({"label": f"S{n}", "title": a.title, "status": a.status, "owner": a.owner, "owner_known": a.owner is not None, "due_text": a.due_text, "due_at": a.due_at,
+                                "due_confidence": a.due_confidence, "meeting": rec.title if rec else None, "meeting_date": rec.started_at[:10] if rec else None, "quote": a.source_quote, "action_id": a.id})
+    content = json.dumps({"query": args.query, "meetings": [{"title": r.title, "date": r.started_at[:10], "status": r.status} for r in targets[:10]], "actions": actions_payload, "hits": hits_payload,
+                          "note": "owners/deadlines marked unknown were not stated; draft actions are unconfirmed"})
+    summary = f"{len(actions_payload)} action(s), {len(hits_payload)} passage(s) from {len(targets)} meeting(s)"
+    return ToolResult(content=content, summary=summary, sources=sources, data={"actions": len(actions_payload), "hits": len(hits_payload), "meetings": len(targets)})
+
+
 def register_builtin(gw: ToolGateway) -> None:
+    gw.register(
+        name="meeting_start", description="Start recording a meeting. Needs on-screen confirmation that participants know; the model cannot start it directly.",
+        permission=Permission.MEETING_RECORD, args_model=MeetingStartArgs, handler=meeting_start, risk="actuate", requires_confirmation=True,
+    )
+    gw.register(
+        name="meeting_control", description="Pause, resume or stop the recording currently in progress.",
+        permission=Permission.MEETING_RECORD, args_model=MeetingControlArgs, handler=meeting_control, risk="actuate",
+    )
+    gw.register(
+        name="meeting_query", description="Answer questions about recorded meetings: actions, decisions and what was said. Give the meeting name when known.",
+        permission=Permission.MEETING_READ, args_model=MeetingQueryArgs, handler=meeting_query,
+    )
     gw.register(
         name="memory_search", description="Search the user's personal memory vault (notes, decisions, meetings, documents). Returns matching passages with citation labels.",
         permission=Permission.MEMORY_READ, args_model=MemorySearchArgs, handler=memory_search, risk="read",

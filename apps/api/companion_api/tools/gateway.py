@@ -137,6 +137,12 @@ class ToolGateway:
         except (ValidationError, ValueError, json.JSONDecodeError) as exc:
             reason = _short_validation_error(exc)
             return ToolCallEvent(call_id=call_id, name=name, status="invalid", reason=reason), None, tool
+        if tool.spec.requires_confirmation and ctx.route == "llm":
+            return (
+                ToolCallEvent(call_id=call_id, name=name, status="needs_confirmation", reason="the user must confirm this on screen", arguments=args.model_dump(mode="json")),
+                None,
+                tool,
+            )
         if tool.resource_check is not None:
             try:
                 denial = await tool.resource_check(ctx, args)

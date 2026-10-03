@@ -44,6 +44,15 @@ only *propose* a tool call; the gateway decides. The same gateway serves the UI'
 own buttons (route `ui`) and the deterministic router (route `deterministic`), so one
 audit trail covers every actuation.
 
+## Jobs and the worker
+
+Long or deferred work (transcription, summarisation, later reminders and email sync) is a
+row in `jobs` on `brain.db`. `companion_worker.queue.JobQueue` hands out atomic leased
+claims; `companion_worker.runner.Worker` runs handlers with heartbeats and keeps one slot for
+interactive jobs. Handlers are idempotent and checkpoint their own progress, so a crash or
+restart never duplicates output. The same `Worker` runs inside the API in development and as
+`companion-worker` on the brain host in production.
+
 ## Data ownership
 
 * Each SQLite database has exactly one owning service on local disk, WAL mode, a

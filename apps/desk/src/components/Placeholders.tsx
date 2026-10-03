@@ -6,12 +6,3 @@ export function LearnPanel() {
     </div>
   );
 }
-
-export function JobsPanel() {
-  return (
-    <div className="card">
-      <h2>Jobs</h2>
-      <p className="muted">Meeting recordings, transcription progress and scheduled reminders will be listed here once the persistent worker ships (Milestone 5/6).</p>
-    </div>
-  );
-}

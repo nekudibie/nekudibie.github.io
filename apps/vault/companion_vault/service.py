@@ -117,7 +117,10 @@ class VaultService:
                     json.dumps(imp.metadata, default=str), now, now,
                 ),
             )
-            n = self._write_chunks(conn, doc_id, imp.title, text)
+            if imp.segments:
+                n = self._write_segment_chunks(conn, doc_id, imp.title, text, imp.segments)
+            else:
+                n = self._write_chunks(conn, doc_id, imp.title, text)
             self._audit(conn, actor, "import", doc_id, kind=imp.kind, chunks=n, source_type=prov.source_type)
         return self.get_document(doc_id, scopes=None)
 
@@ -130,6 +133,39 @@ class VaultService:
                 (new_id("chk"), doc_id, c.seq, c.text, title, anchor.model_dump_json(exclude_none=True)),
             )
         return len(pieces)
+
+    def _write_segment_chunks(self, conn: sqlite3.Connection, doc_id: str, title: str, text: str, segments: list[Any]) -> int:
+        """Group consecutive segments into chunks; anchors keep the first segment id and time span
+        plus the character offsets of the group within the stored document text."""
+        groups: list[list[Any]] = []
+        cur: list[Any] = []
+        size = 0
+        for seg in segments:
+            if cur and size + len(seg.text) > self.chunk_chars:
+                groups.append(cur)
+                cur, size = [], 0
+            cur.append(seg)
+            size += len(seg.text) + 1
+        if cur:
+            groups.append(cur)
+        pos = 0
+        n = 0
+        for seq, group in enumerate(groups):
+            body = " ".join(g.text.strip() for g in group)
+            start = text.find(group[0].text.strip(), pos)
+            if start < 0:
+                start = pos
+            last = group[-1].text.strip()
+            end_idx = text.find(last, start)
+            end = (end_idx + len(last)) if end_idx >= 0 else min(len(text), start + len(body))
+            pos = end
+            anchor = Anchor(kind="segment", segment_id=group[0].id, start_time_s=group[0].start_s, end_time_s=group[-1].end_s, page=group[0].page, start=start, end=end)
+            conn.execute(
+                "INSERT INTO chunks(id, document_id, seq, text, title, anchor_json) VALUES (?,?,?,?,?,?)",
+                (new_id("chk"), doc_id, seq, body, title, anchor.model_dump_json(exclude_none=True)),
+            )
+            n += 1
+        return n
 
     def correct(self, document_id: str, req: CorrectionRequest, *, actor: str, scopes: Iterable[str] | None) -> Document:
         old = self.get_document(document_id, scopes=scopes)
@@ -322,6 +358,9 @@ class VaultService:
         if req.since:
             sql += " AND d.created_at >= ?"
             params.append(req.since)
+        if req.document_ids:
+            sql += f" AND d.id IN ({','.join('?' * len(req.document_ids))})"
+            params += list(req.document_ids)
         sql += " ORDER BY rank, d.created_at DESC LIMIT ?"
         params.append(max(req.limit * 4, 20))
         try:
