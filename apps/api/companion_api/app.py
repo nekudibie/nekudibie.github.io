@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .routes import conversations, health, home, me, memory, settings, structured
+from .routes import audio, conversations, health, home, me, memory, settings, structured
 from .state import AppState, build_state
 
 log = get_logger("companion_api")
@@ -91,6 +91,7 @@ def create_app(cfg: AppConfig, *, state: AppState | None = None, **overrides: An
     app.include_router(conversations.router)
     app.include_router(memory.router)
     app.include_router(structured.router)
+    app.include_router(audio.router)
     app.include_router(home.router)
     app.include_router(settings.router)
 

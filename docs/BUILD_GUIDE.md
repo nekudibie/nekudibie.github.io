@@ -63,9 +63,39 @@ shows "Connected as desk".
 
 ## Stage 4: voice (hardware pending: microphone + speaker)
 
-`companion-audio` runs on the desk Pi with ALSA `arecord`/`aplay`; STT (faster-whisper) and TTS
-(Piper) run on the brain. Validate echo and interruption on the real speaker/microphone pair
-before enabling the wake word.
+Where things run: `companion-audio` on the desk Pi (capture/playback via ALSA `arecord`/
+`aplay`, in-memory buffers only); speech recognition (faster-whisper) and speech synthesis
+(Piper) inside `companion-api` on the brain.
+
+1. **Brain host, install the speech extras and models** (one-off, needs internet):
+   ```bash
+   uv sync --all-packages --extra stt --extra tts        # from packages/integrations extras
+   mkdir -p data/voices && uv run python -m piper.download_voices en_GB-alan-medium --data-dir data/voices
+   ```
+   faster-whisper downloads its model on first use into `data/models/whisper`; pre-warm it
+   with `uv run python -c "from faster_whisper import WhisperModel; WhisperModel('base', device='cpu', compute_type='int8', download_root='data/models/whisper')"`.
+   Set `stt.provider: faster_whisper` and `tts.provider: piper` in `config/local.yaml`.
+   Checkpoint: `GET /v1/audio/status` shows both providers with `is_fixture: false`;
+   `POST /v1/audio/speak` returns a WAV you can play.
+   Piper is GPL-3.0 and runs as a separate optional component.
+2. **Desk Pi, audio devices**: `sudo apt install alsa-utils`, then `arecord -l` / `aplay -l` to
+   find card/device numbers. Test the pair:
+   `arecord -D plughw:1,0 -f S16_LE -r 16000 -c 1 -d 3 /tmp/t.wav && aplay -D plughw:0,0 /tmp/t.wav`
+   (then delete `/tmp/t.wav`). Prefer a USB speakerphone with a physical mute switch.
+3. **Run the client**: `uv run companion-audio --api http://<brain>:8710 --input-device plughw:1,0 --output-device plughw:0,0`.
+   Enter starts/stops a push-to-talk recording, `s` stops speech, `m` toggles the software
+   mute. Pressing Enter while it is speaking interrupts it (barge-in). Without a microphone you
+   can still exercise the whole path: `uv run companion-audio --simulate my_question.wav --output null`
+   (16 kHz mono WAV).
+4. **Echo and self-triggering**: the client is half-duplex (never records while speaking) and
+   stops playback on any new push-to-talk. Measure on the real pair: speak while it answers
+   and confirm it does not transcribe its own voice. Record the result in docs/STATUS.md.
+5. **Wake word (after push-to-talk is stable)**: `uv sync --extra wakeword` on the desk,
+   then `companion-audio --wake-word openwakeword --wake-model hey_jarvis`. Only the 80 ms
+   ring buffer is held in memory; listening stops while muted. Default stays off.
+6. **Physical button/LED** (optional): wire a momentary button to a GPIO pin and call
+   `press_ptt()` / `release_ptt()` from a small gpiozero script; drive an LED from the
+   `on_state` callback so "listening"/"speaking" is visible without the screen.
 
 ## Stage 5: split the vault onto its own host
 

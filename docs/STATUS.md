@@ -13,7 +13,7 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 | 1 | Runnable vertical slice | done, tested locally (66 tests), Ollama connectivity **blocked** (no model host in this container) |
 | 2 | Home (HA adapter, allowlist, scenes, camera contract) | done against a fake HA server (tested locally); **not yet run against Neku's real Home Assistant** |
 | 3 | Memory (structured memory, retrieval evaluation, backups) | done, tested locally (retrieval evaluation and restore test included) |
-| 4 | Voice | unimplemented (research done; see docs/SOURCES.md) |
+| 4 | Voice | software done and tested with fixtures; real STT/TTS adapters import-checked only; **hardware and model validation pending** |
 | 5 | Meetings | unimplemented |
 | 6 | Tutor/reminders | unimplemented |
 | 7 | Personal tools (email, orders, weather, maths, MTG) | unimplemented |
@@ -80,6 +80,16 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   SHA-256 digests, pruning, verification before restore, live files moved aside not deleted;
   restore from a separate directory is tested. (`tests/unit/test_backup_and_eval.py`)
 
+* **Voice path.** `POST /v1/audio/transcribe`, `POST /v1/audio/speak`, and
+  `POST /v1/conversations/{id}/voice` (WAV in, SSE out with a `transcript` event, then the
+  normal turn). Native client `companion-audio` with ALSA backends, push-to-talk, half-duplex
+  echo avoidance, barge-in (press stops playback), software mute labelled as such, offline
+  handling, optional wake-word loop with an in-memory ring buffer, `--simulate file.wav`.
+  Tested in-process against the API with fixture STT/TTS (`tests/integration/test_audio_api.py`,
+  `test_audio_client.py`). The faster-whisper and Piper adapters follow their documented
+  APIs and import correctly on x86_64, but **no real recognition or synthesis has run here**:
+  model downloads from Hugging Face are blocked in this container.
+
 ## Simulated (always labelled as fixtures)
 * Language model (`llm.provider: fixture`): pattern-based demo replies that still go through
   the real tool gateway.
@@ -91,13 +101,14 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   Benchmarks will be recorded only when run on Neku's brain host.
 * Live Home Assistant, Hue/Govee/Tuya coverage and camera protocol: device inventory not yet
   supplied.
-* Audio hardware validation (echo, interruption, latency): no microphone/speaker.
+* Audio hardware validation (echo, interruption, latency) and real STT/TTS model runs: no
+  microphone/speaker here and model downloads are blocked from this container.
 * Email provider: awaiting confirmation (Gmail assumed as the likely first adapter).
 * Several vendor documentation sites were blocked by the container's egress proxy; GitHub
   mirrors were used (see docs/SOURCES.md). Re-check flagged items on a normal connection.
 
 ## Known gaps / next actions
-1. Milestone 4: native audio client, STT/TTS adapters, push-to-talk, cancellation, wake word.
+1. Milestone 5: persistent meeting recording/transcription pipeline (worker, jobs).
 2. Token revocation without restart; rate limiting.
 3. Browser-level UI test (Playwright) for the chat flow.
 4. HLS/WebRTC camera streams (HA `camera/stream` WebSocket command) when a real camera exists.

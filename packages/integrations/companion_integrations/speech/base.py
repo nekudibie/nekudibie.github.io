@@ -6,9 +6,8 @@ import wave
 from collections.abc import AsyncIterator
 from typing import Protocol
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from companion_contracts.health import DependencyStatus
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TranscriptSegment(BaseModel):

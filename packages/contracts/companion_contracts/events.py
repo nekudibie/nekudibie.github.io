@@ -74,6 +74,17 @@ class SourcesEvent(_Event):
     sources: list[Source]
 
 
+class TranscriptEvent(_Event):
+    """What speech recognition heard, before the turn runs on it."""
+
+    type: Literal["transcript"] = "transcript"
+    text: str
+    language: str | None = None
+    duration_ms: int = 0
+    provider: str
+    is_fixture: bool = False
+
+
 class DoneEvent(_Event):
     type: Literal["done"] = "done"
     message_id: str
@@ -91,5 +102,5 @@ class ErrorEvent(_Event):
 
 
 StreamEvent = (
-    StateEvent | TokenEvent | ToolCallEvent | ToolResultEvent | UIEvent | SourcesEvent | DoneEvent | ErrorEvent
+    StateEvent | TokenEvent | ToolCallEvent | ToolResultEvent | UIEvent | SourcesEvent | TranscriptEvent | DoneEvent | ErrorEvent
 )

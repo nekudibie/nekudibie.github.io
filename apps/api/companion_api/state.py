@@ -17,6 +17,8 @@ from companion_integrations.home.fixture import FixtureHomeProvider
 from companion_integrations.llm.base import LLMProvider
 from companion_integrations.llm.fixture import FixtureProvider
 from companion_integrations.llm.ollama import OllamaProvider
+from companion_integrations.speech.base import STTProvider, TTSProvider
+from companion_integrations.speech.fixture import FixtureSTT, FixtureTTS
 from companion_vault.client import HttpVaultClient, LocalVaultClient, VaultClient
 from companion_vault.service import VaultService
 
@@ -34,6 +36,8 @@ class AppState:
     llm: LLMProvider
     home: HomeProvider | None
     clock: Clock
+    stt: STTProvider | None = None
+    tts: TTSProvider | None = None
     warnings: list[str] = field(default_factory=list)
     started_at: float = field(default_factory=time.time)
     perm: type[Permission] = Permission
@@ -70,6 +74,27 @@ def build_home(cfg: AppConfig) -> HomeProvider | None:
     return FixtureHomeProvider()
 
 
+def build_stt(cfg: AppConfig) -> STTProvider | None:
+    if cfg.stt.provider == "disabled":
+        return None
+    if cfg.stt.provider == "faster_whisper":
+        from companion_integrations.speech.faster_whisper_stt import FasterWhisperSTT
+
+        return FasterWhisperSTT(cfg.stt.model, device=cfg.stt.device, compute_type=cfg.stt.compute_type, cpu_threads=cfg.stt.cpu_threads,
+                                download_root=cfg.data_dir / "models" / "whisper", language=cfg.stt.language, max_audio_s=cfg.stt.max_audio_s)
+    return FixtureSTT()
+
+
+def build_tts(cfg: AppConfig) -> TTSProvider | None:
+    if cfg.tts.provider == "disabled":
+        return None
+    if cfg.tts.provider == "piper":
+        from companion_integrations.speech.piper_tts import PiperTTS
+
+        return PiperTTS(cfg.tts.voice, cfg.tts_voices_dir, length_scale=cfg.tts.length_scale)
+    return FixtureTTS()
+
+
 def build_vault(cfg: AppConfig) -> VaultClient:
     if cfg.vault.mode == "remote":
         token = cfg.vault_service_token()
@@ -95,8 +120,14 @@ def build_state(cfg: AppConfig, **overrides: Any) -> AppState:
         llm=overrides.get("llm") or build_llm(cfg),
         home=overrides["home"] if "home" in overrides else build_home(cfg),
         clock=overrides.get("clock") or SystemClock(),
+        stt=overrides["stt"] if "stt" in overrides else build_stt(cfg),
+        tts=overrides["tts"] if "tts" in overrides else build_tts(cfg),
         warnings=warnings,
     )
+    if state.stt is not None:
+        state.extras["stt"] = state.stt
+    if state.tts is not None:
+        state.extras["tts"] = state.tts
     wire_up(state)
     return state
 

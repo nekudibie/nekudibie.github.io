@@ -32,7 +32,9 @@ on any board that boots; paste the output into this file.
   number (printed on the back); choose it after identification. Touch is optional; a USB
   touch controller shows up as a normal HID device on Linux.
 * Audio: a USB microphone/speakerphone or a Pi HAT with a microphone array. USB is simplest
-  and avoids kernel overlays. Hardware mute = a device with a physical mute switch.
+  and avoids kernel overlays. Hardware mute = a device with a physical mute switch; the
+  client's software mute is shown as "software mute" because it is not a disconnect.
+  `companion-audio` needs only `alsa-utils` (`arecord`/`aplay`), 16 kHz mono capture.
 * Power: the official Pi 5 27 W USB-C supply if a Pi 5 is bought; the Pi 5 is picky about
   5 V/5 A for USB peripherals.
 * OS: Raspberry Pi OS (64-bit, Debian 13 "Trixie", Python 3.13) with desktop for the kiosk.
