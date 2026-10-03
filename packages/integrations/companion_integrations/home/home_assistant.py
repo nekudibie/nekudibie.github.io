@@ -17,7 +17,6 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 import httpx
-
 from companion_contracts.health import DependencyStatus
 from companion_contracts.home import CameraView, Entity, EntityCapabilities, HomeCommandResult
 from companion_core.errors import NotFound, UpstreamError, UpstreamUnavailable, ValidationFailed

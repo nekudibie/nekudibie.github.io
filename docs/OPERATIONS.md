@@ -41,11 +41,17 @@ immediately after restart.
 * Never expose ports 8710/8720/11434/8123 to the internet.
 
 ## Backup and restore
-* `deploy/scripts/backup.sh` takes consistent SQLite backups via the backup API (safe while
-  running) into `data/backups/<timestamp>/` and prunes old sets. Copy that directory to a
-  second disk/host.
-* Restore: stop the services, copy `vault.db`/`brain.db` back, start, then run
-  `companion-vault reindex` if the index looks stale.
+* `deploy/scripts/backup.sh` (or `uv run companion-vault backup --include-brain`) takes
+  consistent SQLite backups via the online backup API (safe while services run) into
+  `data/backups/<UTC timestamp>/` with a `manifest.json` (SHA-256 per file, schema version),
+  and prunes to the newest 14 sets. Copy that directory to a second disk or host (rsync).
+  Suggested schedule: a systemd timer or cron entry at 02:00.
+* Restore: stop the services, then `deploy/scripts/restore.sh data/backups/<stamp> --yes`.
+  The copy is checksum- and integrity-checked first; the live files are renamed to
+  `*.pre-restore-<stamp>` rather than deleted. Start the services, check `/readyz`, and run
+  `uv run companion-vault reindex` if search looks stale.
+* `uv run companion-vault eval` prints retrieval quality (recall@k, MRR) on the fixture set;
+  run it after changing chunking or ranking.
 * Deleting a record removes it from the live database at once; backups made before the
   deletion still contain it until they rotate (default retention: 14 daily sets).
 

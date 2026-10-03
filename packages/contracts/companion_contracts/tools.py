@@ -78,6 +78,20 @@ class MemoryCorrectArgs(_Args):
     reason: str = Field(default="", max_length=500)
 
 
+class FactRememberArgs(_Args):
+    subject: str = Field(default="owner", min_length=1, max_length=120, description="Who or what the fact is about; 'owner' for the user")
+    predicate: str = Field(min_length=1, max_length=120, description="e.g. 'favourite tea', 'timezone', 'bike lock code location'")
+    value: str = Field(min_length=1, max_length=2000)
+    note: str | None = Field(default=None, max_length=300)
+
+
+class DecisionRecordArgs(_Args):
+    statement: str = Field(min_length=1, max_length=4000)
+    project: str | None = Field(default=None, max_length=120)
+    rationale: str | None = Field(default=None, max_length=4000)
+    supersedes_decision_id: str | None = Field(default=None, description="Set when this replaces an earlier decision")
+
+
 class ClockNowArgs(_Args):
     pass
 

@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import httpx
 import pytest
-
 from companion_core.errors import UpstreamError, UpstreamUnavailable
-from companion_integrations.home.home_assistant import HomeAssistantProvider, capabilities_from_state
+from companion_integrations.home.home_assistant import (
+    HomeAssistantProvider,
+    capabilities_from_state,
+)
+
 from tests.conftest import ADMIN, DESK, ROVER, new_conversation, sse, text_of
 from tests.fixtures.fake_home_assistant import TOKEN, FakeHA
 

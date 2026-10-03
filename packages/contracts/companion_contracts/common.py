@@ -17,6 +17,10 @@ SourceType = Literal[
     "tool_result",
     "conversation",
     "manual",
+    "fact",
+    "decision",
+    "action",
+    "purchase",
 ]
 
 

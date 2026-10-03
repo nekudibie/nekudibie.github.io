@@ -35,6 +35,7 @@ from companion_core.logging import get_logger
 
 from .chunking import chunk_text
 from .fts import fts_query, keyword_terms
+from .structured import StructuredMemory
 
 log = get_logger(__name__)
 MIGRATIONS_DIR = Path(__file__).parent / "migrations"
@@ -57,6 +58,7 @@ class VaultService:
         self.chunk_chars = chunk_chars
         self.chunk_overlap = chunk_overlap_chars
         self.clock = clock or SystemClock()
+        self.structured = StructuredMemory(db, clock=self.clock)
 
     # -- lifecycle -------------------------------------------------------
     def migrate(self) -> list[str]:

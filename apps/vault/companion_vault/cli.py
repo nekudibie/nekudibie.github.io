@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from companion_core.config import load_config
 from companion_core.errors import ConfigError
@@ -23,6 +24,19 @@ def main(argv: list[str] | None = None) -> int:
     re.add_argument("--config")
     st = sub.add_parser("stats", help="print vault statistics")
     st.add_argument("--config")
+    bk = sub.add_parser("backup", help="consistent backup of vault.db (+ files) into a timestamped folder")
+    bk.add_argument("--config")
+    bk.add_argument("--dest", help="backup root (default: vault.backup_dir or data/backups)")
+    bk.add_argument("--keep", type=int, default=14)
+    bk.add_argument("--include-brain", action="store_true", help="also back up brain.db when it is on this host")
+    rs = sub.add_parser("restore", help="restore from a backup folder (live files are moved aside, never deleted)")
+    rs.add_argument("backup_dir")
+    rs.add_argument("--config")
+    rs.add_argument("--yes", action="store_true", help="confirm; services must be stopped first")
+    ev = sub.add_parser("eval", help="run the retrieval evaluation and print recall@k / MRR")
+    ev.add_argument("--config")
+    ev.add_argument("--corpus")
+    ev.add_argument("--queries")
     args = parser.parse_args(argv)
 
     try:
@@ -40,6 +54,33 @@ def main(argv: list[str] | None = None) -> int:
         from .app import create_app
 
         uvicorn.run(create_app(cfg), host=cfg.vault.host, port=cfg.vault.port, log_config=None)
+        return 0
+    if args.cmd in {"backup", "restore"}:
+        from .backup import BackupTarget, list_backups, make_backup, restore_backup
+
+        targets = [BackupTarget("vault", cfg.vault_db_path, cfg.vault_files_dir)]
+        if getattr(args, "include_brain", False) or args.cmd == "restore":
+            targets.append(BackupTarget("brain", cfg.brain_db_path, None))
+        if args.cmd == "backup":
+            dest = Path(args.dest) if args.dest else cfg.vault_backup_dir
+            out = make_backup(targets, dest, keep=args.keep)
+            print(f"backup written: {out}  (sets kept: {len(list_backups(dest))})")
+            return 0
+        if not args.yes:
+            print("refusing: add --yes after stopping companion-api/companion-vault/companion-worker", file=sys.stderr)
+            return 2
+        done = restore_backup(Path(args.backup_dir), targets)
+        print(f"restored: {', '.join(done) or 'nothing matched'}; previous files kept as *.pre-restore-*")
+        return 0
+    if args.cmd == "eval":
+        import json
+
+        from .evaluation import default_fixture_dir, load_jsonl, run_evaluation
+
+        d = default_fixture_dir()
+        corpus = load_jsonl(Path(args.corpus) if args.corpus else d / "corpus.jsonl")
+        queries = load_jsonl(Path(args.queries) if args.queries else d / "queries.jsonl")
+        print(json.dumps(run_evaluation(corpus, queries).to_dict(), indent=2))
         return 0
     svc = build_service(cfg)
     if args.cmd == "migrate":

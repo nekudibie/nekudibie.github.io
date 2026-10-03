@@ -6,9 +6,12 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from companion_contracts.common import Source
 from companion_contracts.tools import (
     CameraShowArgs,
     ClockNowArgs,
+    DecisionRecordArgs,
+    FactRememberArgs,
     HomeControlArgs,
     HomeStateArgs,
     MemoryCorrectArgs,
@@ -19,6 +22,7 @@ from companion_contracts.tools import (
 from companion_contracts.vault import CorrectionRequest, NoteCreate, SearchRequest
 from companion_core.auth import Permission
 from companion_core.errors import NotFound, ValidationFailed
+from companion_vault.structured import DecisionCreate, FactCreate
 
 from .gateway import ToolContext, ToolGateway
 
@@ -44,9 +48,61 @@ async def memory_search(ctx: ToolContext, args: MemorySearchArgs) -> ToolResult:
         }
         for h, s in zip(res.hits, sources, strict=True)
     ]
-    content = json.dumps({"query": args.query, "count": len(res.hits), "strategy": res.strategy, "hits": hits_payload})
-    summary = f"{len(res.hits)} matching record{'s' if len(res.hits) != 1 else ''}" if res.hits else "no matching records"
-    return ToolResult(content=content, summary=summary, sources=sources, data={"count": len(res.hits), "strategy": res.strategy}, provider=f"vault:{getattr(ctx.state.vault, 'mode', 'unknown')}")
+    # structured memory: confirmed facts and current decisions, each with their own citation label
+    facts = await ctx.state.vault.search_facts(args.query, scopes=ctx.identity.memory_scopes, limit=5)
+    decisions = await ctx.state.vault.search_decisions(args.query, scopes=ctx.identity.memory_scopes, limit=5)
+    n = len(sources)
+    facts_payload = []
+    for f in facts:
+        n += 1
+        label = f"S{n}"
+        sources.append(Source(label=label, document_id=f.evidence_document_id or f.id, chunk_id=f.evidence_chunk_id, title=f"{f.subject}: {f.predicate}",
+                              snippet=f.value, source_type="fact", captured_at=f.confirmed_at or f.created_at))
+        facts_payload.append({"label": label, "subject": f.subject, "predicate": f.predicate, "value": f.value, "status": f.status,
+                              "since": f.valid_from, "trust": f.trust, "fact_id": f.id})
+    decisions_payload = []
+    matched_docs = {h.document_id for h in res.hits}
+    for d in decisions:
+        if d.source_document_id and d.source_document_id in matched_docs:
+            continue
+        n += 1
+        label = f"S{n}"
+        sources.append(Source(label=label, document_id=d.source_document_id or d.id, chunk_id=d.source_chunk_id, title=f"Decision ({d.project_name or 'no project'})",
+                              snippet=d.statement, source_type="decision", captured_at=d.decided_at))
+        decisions_payload.append({"label": label, "statement": d.statement, "project": d.project_name, "status": d.status, "decided_at": d.decided_at,
+                                  "rationale": d.rationale[:300], "decision_id": d.id})
+    total = len(res.hits) + len(facts) + len(decisions)
+    content = json.dumps({"query": args.query, "count": total, "strategy": res.strategy, "hits": hits_payload, "facts": facts_payload, "decisions": decisions_payload})
+    summary = f"{total} matching record{'s' if total != 1 else ''}" if total else "no matching records"
+    return ToolResult(content=content, summary=summary, sources=sources, data={"count": total, "strategy": res.strategy, "facts": len(facts), "decisions": len(decisions)}, provider=f"vault:{getattr(ctx.state.vault, 'mode', 'unknown')}")
+
+
+async def fact_remember(ctx: ToolContext, args: FactRememberArgs) -> ToolResult:
+    """An explicitly stated fact: confirmed, and it supersedes an earlier value for the same subject/predicate."""
+    f = await ctx.state.vault.add_fact(
+        FactCreate(subject=args.subject, predicate=args.predicate, value=args.value, status="confirmed", trust="owner_stated", confidence=1.0,
+                   evidence_message_id=None, note=args.note or ""),
+        actor=ctx.identity.client_id,
+    )
+    replaced = f.supersedes_id is not None
+    content = json.dumps({"saved": True, "fact_id": f.id, "subject": f.subject, "predicate": f.predicate, "value": f.value, "replaced_previous_value": replaced})
+    return ToolResult(content=content, summary=f"fact saved: {f.subject} {f.predicate} = {f.value}" + (" (replaced the previous value)" if replaced else ""),
+                      data={"fact_id": f.id, "replaced": replaced})
+
+
+async def decision_record(ctx: ToolContext, args: DecisionRecordArgs) -> ToolResult:
+    """The original wording is stored as an anchored document; the decision row links to it."""
+    text = args.statement + (f"\n\nRationale: {args.rationale}" if args.rationale else "")
+    doc = await ctx.state.vault.create_note(NoteCreate(text=text, title=args.statement[:120], kind="decision", project=args.project), actor=ctx.identity.client_id)
+    new = DecisionCreate(statement=args.statement, project=args.project, rationale=args.rationale or "", source_document_id=doc.id)
+    if args.supersedes_decision_id:
+        d = await ctx.state.vault.supersede_decision(args.supersedes_decision_id, new, actor=ctx.identity.client_id, scopes=ctx.identity.memory_scopes)
+        verb = "updated"
+    else:
+        d = await ctx.state.vault.record_decision(new, actor=ctx.identity.client_id)
+        verb = "recorded"
+    content = json.dumps({"saved": True, "decision_id": d.id, "document_id": doc.id, "project": d.project_name, "statement": d.statement, "status": d.status, "supersedes": d.supersedes_id})
+    return ToolResult(content=content, summary=f"decision {verb}" + (f" for {d.project_name}" if d.project_name else ""), data={"decision_id": d.id, "document_id": doc.id, "project": d.project_name, "kind": "decision"})
 
 
 async def memory_save(ctx: ToolContext, args: MemorySaveArgs) -> ToolResult:
@@ -159,6 +215,14 @@ def register_builtin(gw: ToolGateway) -> None:
     gw.register(
         name="memory_correct", description="Replace an existing saved record with corrected text, keeping the old revision in history.",
         permission=Permission.MEMORY_WRITE, args_model=MemoryCorrectArgs, handler=memory_correct, risk="write",
+    )
+    gw.register(
+        name="fact_remember", description="Store a fact the user explicitly stated about themselves or their things (subject, predicate, value). A new value for the same subject and predicate replaces the old one and keeps history.",
+        permission=Permission.MEMORY_WRITE, args_model=FactRememberArgs, handler=fact_remember, risk="write",
+    )
+    gw.register(
+        name="decision_record", description="Record a project decision the user stated, or update an earlier decision by giving its id in supersedes_decision_id.",
+        permission=Permission.MEMORY_WRITE, args_model=DecisionRecordArgs, handler=decision_record, risk="write",
     )
     gw.register(name="clock_now", description="Current local date and time.", permission=Permission.CONVERSE, args_model=ClockNowArgs, handler=clock_now)
     home_enabled = gw.state.home is not None

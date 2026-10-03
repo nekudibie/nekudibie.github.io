@@ -32,8 +32,37 @@ from companion_core.logging import get_logger, request_id_var
 from companion_core.version import version_info
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel, Field
 
 from .service import VaultService
+from .structured import ActionCreate, DecisionCreate, FactCreate, PurchaseUpsert
+
+
+class _Reason(BaseModel):
+    reason: str = ""
+
+
+class _FactUpdate(BaseModel):
+    value: str = Field(min_length=1, max_length=2000)
+    reason: str = ""
+
+
+class _FactSearch(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+    limit: int = Field(default=10, ge=1, le=50)
+    include_candidates: bool = False
+
+
+class _DecisionSearch(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+    limit: int = Field(default=10, ge=1, le=50)
+
+
+class _Attempt(BaseModel):
+    exercise_id: str
+    passed: bool
+    score: float | None = None
+    topics: list[str] = Field(default_factory=list)
 
 log = get_logger(__name__)
 
@@ -177,6 +206,93 @@ def create_app(cfg: AppConfig, service: VaultService | None = None) -> FastAPI:
             yield from svc(request).export_jsonl(scopes=actor.scopes, include_deleted=include_deleted)
 
         return StreamingResponse(gen(), media_type="application/x-ndjson")
+
+    sm = lambda request: svc(request).structured  # noqa: E731
+
+    @app.post("/v1/vault/facts", status_code=201)
+    async def add_fact(f: FactCreate, actor: ActorDep, request: Request):
+        return sm(request).add_fact(f, actor=actor.client_id)
+
+    @app.get("/v1/vault/facts")
+    async def list_facts(actor: ActorDep, request: Request, subject: str | None = None, predicate: str | None = None, include_candidates: bool = False):
+        return sm(request).current_facts(scopes=actor.scopes, subject=subject, predicate=predicate, include_candidates=include_candidates)
+
+    @app.post("/v1/vault/facts/search")
+    async def search_facts(req: _FactSearch, actor: ActorDep, request: Request):
+        return sm(request).search_facts(req.query, scopes=actor.scopes, limit=req.limit, include_candidates=req.include_candidates)
+
+    @app.get("/v1/vault/facts/candidates")
+    async def candidates(actor: ActorDep, request: Request, limit: int = 50):
+        return sm(request).candidates(scopes=actor.scopes, limit=limit)
+
+    @app.post("/v1/vault/facts/{fact_id}/confirm")
+    async def confirm_fact(fact_id: str, actor: ActorDep, request: Request):
+        return sm(request).confirm_fact(fact_id, actor=actor.client_id, scopes=actor.scopes)
+
+    @app.post("/v1/vault/facts/{fact_id}/reject")
+    async def reject_fact(fact_id: str, body: _Reason, actor: ActorDep, request: Request):
+        return sm(request).reject_fact(fact_id, actor=actor.client_id, reason=body.reason, scopes=actor.scopes)
+
+    @app.post("/v1/vault/facts/{fact_id}/retract")
+    async def retract_fact(fact_id: str, body: _Reason, actor: ActorDep, request: Request):
+        return sm(request).retract_fact(fact_id, actor=actor.client_id, reason=body.reason, scopes=actor.scopes)
+
+    @app.post("/v1/vault/facts/{fact_id}/update")
+    async def update_fact(fact_id: str, body: _FactUpdate, actor: ActorDep, request: Request):
+        return sm(request).update_fact(fact_id, body.value, actor=actor.client_id, reason=body.reason, scopes=actor.scopes)
+
+    @app.get("/v1/vault/facts/{fact_id}/history")
+    async def fact_history(fact_id: str, actor: ActorDep, request: Request):
+        return sm(request).fact_history(fact_id, scopes=actor.scopes)
+
+    @app.post("/v1/vault/decisions", status_code=201)
+    async def record_decision(d: DecisionCreate, actor: ActorDep, request: Request):
+        return sm(request).record_decision(d, actor=actor.client_id)
+
+    @app.get("/v1/vault/decisions")
+    async def list_decisions(actor: ActorDep, request: Request, project: str | None = None, include_history: bool = False):
+        return sm(request).list_decisions(scopes=actor.scopes, project=project, include_history=include_history)
+
+    @app.post("/v1/vault/decisions/search")
+    async def search_decisions(req: _DecisionSearch, actor: ActorDep, request: Request):
+        return sm(request).search_decisions(req.query, scopes=actor.scopes, limit=req.limit)
+
+    @app.post("/v1/vault/decisions/{decision_id}/supersede")
+    async def supersede_decision(decision_id: str, d: DecisionCreate, actor: ActorDep, request: Request):
+        return sm(request).supersede_decision(decision_id, d, actor=actor.client_id, scopes=actor.scopes)
+
+    @app.post("/v1/vault/decisions/{decision_id}/reverse")
+    async def reverse_decision(decision_id: str, body: _Reason, actor: ActorDep, request: Request):
+        return sm(request).reverse_decision(decision_id, actor=actor.client_id, reason=body.reason, scopes=actor.scopes)
+
+    @app.post("/v1/vault/actions", status_code=201)
+    async def create_action(a: ActionCreate, actor: ActorDep, request: Request):
+        return sm(request).create_action(a, actor=actor.client_id)
+
+    @app.get("/v1/vault/actions")
+    async def list_actions(actor: ActorDep, request: Request, status: Annotated[list[str] | None, Query()] = None, meeting_id: str | None = None):
+        return sm(request).list_actions(scopes=actor.scopes, status=status, meeting_id=meeting_id)
+
+    @app.patch("/v1/vault/actions/{action_id}")
+    async def update_action(action_id: str, fields: dict, actor: ActorDep, request: Request):
+        return sm(request).update_action(action_id, actor=actor.client_id, scopes=actor.scopes, **fields)
+
+    @app.post("/v1/vault/purchases")
+    async def upsert_purchase(p: PurchaseUpsert, actor: ActorDep, request: Request):
+        purchase, outcome = sm(request).upsert_purchase(p, actor=actor.client_id)
+        return {"purchase": purchase, "outcome": outcome}
+
+    @app.get("/v1/vault/purchases")
+    async def list_purchases(actor: ActorDep, request: Request, merchant: str | None = None, since: str | None = None):
+        return sm(request).list_purchases(scopes=actor.scopes, merchant=merchant, since=since)
+
+    @app.post("/v1/vault/lessons/{course_id}/{lesson_id}/attempts")
+    async def record_attempt(course_id: str, lesson_id: str, body: _Attempt, actor: ActorDep, request: Request):
+        return sm(request).record_attempt(course_id, lesson_id, exercise_id=body.exercise_id, passed=body.passed, score=body.score, topics=body.topics, actor=actor.client_id)
+
+    @app.get("/v1/vault/lessons/{course_id}")
+    async def progress(course_id: str, actor: ActorDep, request: Request):
+        return sm(request).progress(course_id, scopes=actor.scopes)
 
     @app.post("/v1/vault/admin/reindex")
     async def reindex(actor: ActorDep, request: Request):

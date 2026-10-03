@@ -33,6 +33,7 @@ from companion_core.ids import new_id
 from companion_core.logging import get_logger
 from pydantic import BaseModel
 
+from .memory_extractor import extract_candidates
 from .prompting import system_prompt, wrap_untrusted
 from .router import Route
 from .tools.gateway import ToolContext
@@ -93,8 +94,9 @@ class Orchestrator:
         if conv.client_id != identity.client_id and not identity.has(st.perm.ADMIN):
             raise PermissionDenied("this conversation belongs to another client")
         started = time.monotonic()
-        st.store.add_message(conversation_id, "user", text, meta={"input_mode": input_mode})
+        user_msg = st.store.add_message(conversation_id, "user", text, meta={"input_mode": input_mode})
         st.store.set_title_if_empty(conversation_id, text)
+        await self._propose_candidates(identity, text, user_msg.id)
         cancel = self.cancels.register(conversation_id)
         ctx = ToolContext(identity=identity, state=st, conversation_id=conversation_id, client_capabilities=client_capabilities or [])
         collected = Collected()
@@ -140,6 +142,25 @@ class Orchestrator:
 
     def cancel(self, conversation_id: str) -> int:
         return self.cancels.cancel(conversation_id)
+
+    async def _propose_candidates(self, identity: ClientIdentity, text: str, message_id: str) -> None:
+        """Store inferred facts as review candidates (never confirmed automatically)."""
+        if not identity.has(self.state.perm.MEMORY_WRITE) or "owner" not in identity.memory_scopes:
+            return
+        try:
+            from companion_vault.structured import FactCreate
+
+            for c in extract_candidates(text):
+                existing = await self.state.vault.list_facts(scopes=identity.memory_scopes, subject=c.subject, predicate=c.predicate, include_candidates=True)
+                if any(f.value.strip().lower() == c.value.lower() for f in existing):
+                    continue
+                await self.state.vault.add_fact(
+                    FactCreate(subject=c.subject, predicate=c.predicate, value=c.value, status="candidate", confidence=c.confidence,
+                               trust="inferred", evidence_message_id=message_id, evidence_quote=c.quote[:1000]),
+                    actor="extractor",
+                )
+        except Exception:  # noqa: BLE001 - extraction must never break a turn
+            log.exception("candidate extraction failed")
 
     # -- deterministic ---------------------------------------------------
     async def _run_route(self, ctx: ToolContext, route: Route, collected: Collected, cancel: asyncio.Event) -> AsyncIterator[BaseModel]:

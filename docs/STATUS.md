@@ -12,7 +12,7 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 | 0 | Audit, foundations, decisions | done |
 | 1 | Runnable vertical slice | done, tested locally (66 tests), Ollama connectivity **blocked** (no model host in this container) |
 | 2 | Home (HA adapter, allowlist, scenes, camera contract) | done against a fake HA server (tested locally); **not yet run against Neku's real Home Assistant** |
-| 3 | Memory (structured memory, retrieval evaluation, backups) | partly: documents/chunks/FTS/correction/deletion/export done; structured tables, evaluation harness and backup scripts unimplemented |
+| 3 | Memory (structured memory, retrieval evaluation, backups) | done, tested locally (retrieval evaluation and restore test included) |
 | 4 | Voice | unimplemented (research done; see docs/SOURCES.md) |
 | 5 | Meetings | unimplemented |
 | 6 | Tutor/reminders | unimplemented |
@@ -64,6 +64,22 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   admin-only discovery view lists every entity with its allowed flag.
   (`tests/integration/test_home_assistant.py`, fake server in `tests/fixtures/`)
 
+* **Structured memory.** Facts with `candidate` / `confirmed` / `superseded` / `retracted` /
+  `rejected` statuses, provenance and validity windows; projects and decisions with
+  supersession; actions that keep owner/deadline uncertainty; purchases with de-duplication
+  and non-regressing status transitions; lesson progress from attempts. Conversation text is
+  mined for *candidates* only (regex heuristics); the Notes page lists them for confirm/reject,
+  and answers never use unconfirmed candidates. Works identically in embedded and remote
+  vault modes. (`tests/unit/test_structured_memory.py`, `tests/integration/test_structured_api.py`)
+* **Retrieval evaluation** (`companion-vault eval`, fixture set of 25 records / 35 queries):
+  recall@1 = recall@5 = 0.914, MRR = 0.914. The three misses are deliberate paraphrases with
+  no keyword overlap ("what hot drink do I like", "annual vehicle inspection", "my cycling
+  security"). That is the current evidence base for deciding on local embeddings: keyword
+  search handles direct recall well and fails on vocabulary mismatch, as expected.
+* **Backup and restore.** Consistent online backups (SQLite backup API) with manifests and
+  SHA-256 digests, pruning, verification before restore, live files moved aside not deleted;
+  restore from a separate directory is tested. (`tests/unit/test_backup_and_eval.py`)
+
 ## Simulated (always labelled as fixtures)
 * Language model (`llm.provider: fixture`): pattern-based demo replies that still go through
   the real tool gateway.
@@ -81,9 +97,7 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   mirrors were used (see docs/SOURCES.md). Re-check flagged items on a normal connection.
 
 ## Known gaps / next actions
-1. Milestone 3: structured memory tables (facts/projects/decisions/actions/purchases/lesson
-   progress), candidate vs confirmed facts, retrieval evaluation harness, backup/restore
-   scripts with a restore test.
+1. Milestone 4: native audio client, STT/TTS adapters, push-to-talk, cancellation, wake word.
 2. Token revocation without restart; rate limiting.
 3. Browser-level UI test (Playwright) for the chat flow.
 4. HLS/WebRTC camera streams (HA `camera/stream` WebSocket command) when a real camera exists.

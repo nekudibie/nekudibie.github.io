@@ -1,4 +1,4 @@
-import type { Dependency, Doc, Entity, CameraView, Me, Message, SearchHit, StreamEvent } from "./types";
+import type { Decision, Dependency, Doc, Entity, CameraView, Fact, Me, Message, SearchHit, StreamEvent } from "./types";
 
 const LS_URL = "companion.apiUrl";
 const LS_TOKEN = "companion.token";
@@ -54,6 +54,13 @@ export const api = {
   history: (id: string) => req<Doc[]>(`/v1/memory/documents/${id}/history`),
   correct: (id: string, new_text: string, reason: string) => req<Doc>(`/v1/memory/documents/${id}/correct`, { method: "POST", body: JSON.stringify({ new_text, reason }) }),
   deleteDoc: (id: string) => req<{ note: string }>(`/v1/memory/documents/${id}`, { method: "DELETE" }),
+  candidates: () => req<Fact[]>("/v1/memory/facts/candidates"),
+  facts: () => req<Fact[]>("/v1/memory/facts"),
+  confirmFact: (id: string) => req<Fact>(`/v1/memory/facts/${id}/confirm`, { method: "POST" }),
+  rejectFact: (id: string, reason = "") => req<Fact>(`/v1/memory/facts/${id}/reject`, { method: "POST", body: JSON.stringify({ reason }) }),
+  retractFact: (id: string, reason = "") => req<Fact>(`/v1/memory/facts/${id}/retract`, { method: "POST", body: JSON.stringify({ reason }) }),
+  updateFact: (id: string, value: string, reason = "") => req<Fact>(`/v1/memory/facts/${id}/update`, { method: "POST", body: JSON.stringify({ value, reason }) }),
+  decisions: () => req<Decision[]>("/v1/memory/decisions"),
   entities: () => req<Entity[]>("/v1/home/entities"),
   homeStatus: () => req<{ enabled: boolean; provider: string | null; is_fixture: boolean }>("/v1/home/status"),
   command: (entity_id: string, action: string, extra: Record<string, unknown> = {}) =>

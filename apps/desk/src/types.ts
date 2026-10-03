@@ -45,3 +45,6 @@ export interface SearchHit { document_id: string; chunk_id: string; title: strin
 
 export interface Dependency { name: string; status: "ok" | "degraded" | "down" | "disabled" | "fixture"; detail: string; latency_ms?: number | null }
 export interface Me { client_id: string; role: string; label: string; permissions: string[]; tools: string[]; owner_name: string; timezone: string; instance: string }
+
+export interface Fact { id: string; subject: string; predicate: string; value: string; status: string; confidence: number; trust: string; evidence_quote?: string | null; evidence_message_id?: string | null; valid_from?: string | null; created_at: string; confirmed_at?: string | null; supersedes_id?: string | null }
+export interface Decision { id: string; project_name?: string | null; statement: string; rationale: string; status: string; decided_at: string; supersedes_id?: string | null }

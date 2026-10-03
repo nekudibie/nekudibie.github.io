@@ -6,9 +6,9 @@ from tests.conftest import DESK, new_conversation, sse, text_of
 def test_remember_then_recall_with_citation(client):
     cid = new_conversation(client)
     events = sse(client, cid, "Remember that we decided to use SQLite FTS5 for the Lantern project before any vector database.")
-    assert [d["name"] for t, d in events if t == "tool_call"] == ["memory_save"]
+    assert [d["name"] for t, d in events if t == "tool_call"] == ["decision_record"]
     saved = [d for t, d in events if t == "tool_result"][0]
-    assert saved["ok"] and saved["data"]["kind"] == "decision"
+    assert saved["ok"] and saved["data"]["kind"] == "decision" and saved["data"]["decision_id"]
     events = sse(client, cid, "What did we decide about the Lantern project?")
     out = text_of(events)
     assert "[S1]" in out and "FTS5" in out

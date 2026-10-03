@@ -1,0 +1,25 @@
+{"id": "n1", "kind": "decision", "title": "Lantern retrieval decision", "text": "Project Lantern decision: we will use SQLite FTS5 for retrieval first and only add a vector index after an evaluation shows it helps."}
+{"id": "n2", "kind": "note", "title": "Desk lamp colour", "text": "The desk lamp is set to 2700K in the evening and 4000K while working. Hue bulb, controlled through the bridge."}
+{"id": "n3", "kind": "meeting_summary", "title": "Orion planning meeting", "text": "Orion planning meeting on 12 September. Actions: Neku to send the revised budget sheet by Friday. Priya to book the test lab. Decision: ship the beta in October."}
+{"id": "n4", "kind": "note", "title": "Bike lock", "text": "The bike lock combination is written on the card inside the blue toolbox, second drawer."}
+{"id": "n5", "kind": "email", "title": "Argos order confirmation", "text": "Thanks for your order from Argos. Order 8812-3301: 1 x Russell Hobbs kettle, £29.99. Collect from the Headingley store."}
+{"id": "n6", "kind": "email", "title": "Amazon dispatched", "text": "Your Amazon order 203-5567 has been dispatched: Fifine USB microphone K669. Expected delivery Thursday."}
+{"id": "n7", "kind": "note", "title": "Python study plan", "text": "Python study plan: lists and loops this week, then functions, then files and errors. Thirty minutes each weekday evening at 19:30."}
+{"id": "n8", "kind": "decision", "title": "Rover computer", "text": "Decision for the rover: the onboard computer will be a Raspberry Pi 5 with a separate microcontroller for the motor watchdog. Changed from the earlier Pi 4 plan."}
+{"id": "n9", "kind": "note", "title": "Weekly shop", "text": "Weekly shop list: oat milk, Earl Grey tea, basmati rice, tinned tomatoes, kitchen roll."}
+{"id": "n10", "kind": "meeting_summary", "title": "Hydra sync", "text": "Hydra weekly sync. Marcus asked for the API error budget numbers. Action: Neku to share the dashboard link. No decisions."}
+{"id": "n11", "kind": "note", "title": "Camera", "text": "Front door camera is a Reolink; it exposes RTSP on the LAN. Credentials are in the password manager under 'front door cam'."}
+{"id": "n12", "kind": "note", "title": "Boiler service", "text": "Boiler was serviced on 3 March by Northgate Heating. Next service due March next year. Pressure should sit around 1.2 bar."}
+{"id": "n13", "kind": "note", "title": "MTG deck", "text": "Commander deck 'Tide Turner' is mono-blue, led by Thassa. Mostly instants and flash creatures; avoid cards that need green mana."}
+{"id": "n14", "kind": "decision", "title": "Audio hardware", "text": "Decision: use a USB speakerphone with a physical mute button for the desk instead of a microphone HAT, so the mute is a real hardware cut."}
+{"id": "n15", "kind": "email", "title": "Amazon refund", "text": "Refund issued for Amazon order 203-1190 (HDMI cable). £8.49 returned to your card within 5 days."}
+{"id": "n16", "kind": "note", "title": "Wi-Fi", "text": "The study Wi-Fi access point is on channel 36; the mesh node in the hall drops out when the microwave runs."}
+{"id": "n17", "kind": "meeting_summary", "title": "Orion retro", "text": "Orion retrospective. What went well: test coverage. What didn't: late design changes. Action: Priya to write the design freeze policy."}
+{"id": "n18", "kind": "note", "title": "Doctor", "text": "GP appointment booked for 21 October at 10:40, Burley Park surgery. Bring the blood test letter."}
+{"id": "n19", "kind": "note", "title": "Govee strip", "text": "The Govee strip behind the monitor is model H6159; LAN control is enabled in the Govee app so Home Assistant can reach it locally."}
+{"id": "n20", "kind": "note", "title": "Backups", "text": "Vault backups go to the external HDD every night at 02:00; keep fourteen days. Test a restore on the first of each month."}
+{"id": "n21", "kind": "lesson_note", "title": "Python lesson 2", "text": "Lesson 2 covered for loops over lists and range(). Exercise: sum the even numbers under 100. Got it right on the second attempt after an off-by-one."}
+{"id": "n22", "kind": "note", "title": "Car MOT", "text": "Car MOT is due 14 November. Garage on Kirkstall Road; book two weeks ahead."}
+{"id": "n23", "kind": "email", "title": "Delivery attempted", "text": "Evri tried to deliver parcel H00234 today; no one answered. It will be left at the Co-op parcel shop tomorrow."}
+{"id": "n24", "kind": "decision", "title": "Timezone", "text": "All reminders are scheduled in Europe/London; the scheduler must handle the clocks changing in March and October."}
+{"id": "n25", "kind": "note", "title": "Plants", "text": "Water the monstera every ten days and the basil daily in summer. The fern wants misting."}

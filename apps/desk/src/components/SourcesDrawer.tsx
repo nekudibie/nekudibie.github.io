@@ -16,7 +16,9 @@ export default function SourcesDrawer({ sources, onClose }: { sources: Source[];
           <div className="muted" style={{ fontSize: ".85rem" }}>{s.source_type}{s.captured_at ? ` · ${fmtTime(s.captured_at)}` : ""}{s.anchor && "start" in s.anchor ? ` · chars ${String(s.anchor.start)}–${String(s.anchor.end)}` : ""}</div>
           <p style={{ margin: "6px 0" }}>{s.snippet}</p>
           <div className="row">
-            <button className="small" onClick={() => api.document(s.document_id).then(setOpen)}>Open record</button>
+            {s.source_type === "fact" || s.source_type === "decision"
+              ? <span className="badge info">{s.source_type} · structured memory</span>
+              : <button className="small" onClick={() => api.document(s.document_id).then(setOpen)}>Open record</button>}
             {s.source_uri && <a href={s.source_uri} target="_blank" rel="noreferrer">Original link</a>}
           </div>
         </div>

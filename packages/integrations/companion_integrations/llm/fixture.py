@@ -95,10 +95,20 @@ class FixtureProvider:
     # -- intent selection ----------------------------------------------
     def _choose_tool(self, user: str, tools: list[dict[str, Any]]) -> ToolCall | None:
         m = _REMEMBER_RE.match(user)
-        if m and _tool_available(tools, "memory_save"):
+        if m:
             text = m.group(1).strip()
-            kind = "decision" if re.search(r"\bdecid|decision\b", text, re.I) else "note"
-            return ToolCall(id=new_id("call"), name="memory_save", arguments={"text": text, "kind": kind})
+            fm = re.match(r"^(?:that\s+)?my ([a-z][a-z ]{1,40}?) is (?:now )?(.+?)[.!]?$", text, re.I)
+            if fm and _tool_available(tools, "fact_remember"):
+                return ToolCall(id=new_id("call"), name="fact_remember", arguments={"subject": "owner", "predicate": fm.group(1).strip().lower(), "value": fm.group(2).strip()})
+            dm = re.match(r"^(?:that\s+)?(?:we|i) decided (?:that )?(.+?)(?:\s+for (?:the )?(.+?) project)?[.!]?$", text, re.I)
+            if dm and _tool_available(tools, "decision_record"):
+                args = {"statement": dm.group(1).strip()}
+                if dm.group(2):
+                    args["project"] = dm.group(2).strip()
+                return ToolCall(id=new_id("call"), name="decision_record", arguments=args)
+            if _tool_available(tools, "memory_save"):
+                kind = "decision" if re.search(r"\bdecid|decision\b", text, re.I) else "note"
+                return ToolCall(id=new_id("call"), name="memory_save", arguments={"text": text, "kind": kind})
         if _TIME_RE.search(user) and _tool_available(tools, "clock_now"):
             return ToolCall(id=new_id("call"), name="clock_now", arguments={})
         if _WEATHER_RE.search(user) and _tool_available(tools, "weather_forecast"):
@@ -123,8 +133,17 @@ class FixtureProvider:
             return f"I tried to use {tool_name} but it was refused: {data.get('error')}."
         if tool_name == "memory_search":
             hits = data.get("hits") or []
-            if not hits:
+            facts = data.get("facts") or []
+            decisions = data.get("decisions") or []
+            if not hits and not facts and not decisions:
                 return "I couldn't find any saved record about that in your memory vault, so I won't guess."
+            if facts and not hits:
+                f = facts[0]
+                return f"Your {f['predicate']} is {f['value']} [{f['label']}]." + (f" ({len(facts)} facts matched.)" if len(facts) > 1 else "")
+            if decisions and not hits:
+                d = decisions[0]
+                proj = f" for {d['project']}" if d.get("project") else ""
+                return f"The current decision{proj} is: {d['statement']} [{d['label']}]." + (" Earlier versions are kept in history." if d.get("status") == "current" else "")
             parts = []
             for i, h in enumerate(hits[:2], start=1):
                 body = (h.get("text") or h.get("snippet") or "").strip().replace("\n", " ")
@@ -136,6 +155,12 @@ class FixtureProvider:
             return lead + " ".join(parts) + tail
         if tool_name == "memory_save":
             return f"Saved as “{data.get('title', 'a note')}”. I'll be able to find it later and cite it."
+        if tool_name == "fact_remember":
+            tail = " That replaces what I had before; the old value stays in history." if data.get("replaced_previous_value") else ""
+            return f"Noted: your {data.get('predicate')} is {data.get('value')}.{tail}"
+        if tool_name == "decision_record":
+            proj = f" for {data.get('project')}" if data.get("project") else ""
+            return f"Decision recorded{proj}: {data.get('statement')}."
         if tool_name == "clock_now":
             return f"It's {data.get('time_local')} on {data.get('date_local')} ({data.get('timezone')})."
         if tool_name == "weather_forecast":

@@ -1,0 +1,35 @@
+{"query": "what did we decide about retrieval for lantern", "expected": ["n1"]}
+{"query": "lantern vector index", "expected": ["n1"]}
+{"query": "what was my action from the orion meeting", "expected": ["n3", "n17"]}
+{"query": "budget sheet deadline", "expected": ["n3"]}
+{"query": "who books the test lab", "expected": ["n3"]}
+{"query": "where is the bike lock combination", "expected": ["n4"]}
+{"query": "kettle order argos", "expected": ["n5"]}
+{"query": "what did I recently buy on amazon", "expected": ["n6", "n15"]}
+{"query": "usb microphone delivery", "expected": ["n6"]}
+{"query": "python study schedule evenings", "expected": ["n7"]}
+{"query": "rover onboard computer", "expected": ["n8"]}
+{"query": "earl grey tea shopping", "expected": ["n9"]}
+{"query": "dashboard link marcus", "expected": ["n10"]}
+{"query": "front door camera rtsp", "expected": ["n11"]}
+{"query": "when is the boiler service due", "expected": ["n12"]}
+{"query": "commander deck thassa", "expected": ["n13"]}
+{"query": "hardware mute speakerphone decision", "expected": ["n14"]}
+{"query": "hdmi cable refund", "expected": ["n15"]}
+{"query": "wifi drops when microwave runs", "expected": ["n16"]}
+{"query": "design freeze policy", "expected": ["n17"]}
+{"query": "GP appointment time", "expected": ["n18"]}
+{"query": "govee strip model number", "expected": ["n19"]}
+{"query": "how long are backups kept", "expected": ["n20"]}
+{"query": "for loops exercise even numbers", "expected": ["n21"]}
+{"query": "MOT due date", "expected": ["n22"]}
+{"query": "missed parcel evri", "expected": ["n23"]}
+{"query": "clocks change reminders", "expected": ["n24"]}
+{"query": "how often to water the monstera", "expected": ["n25"]}
+{"query": "desk lamp colour temperature at night", "expected": ["n2"]}
+{"query": "paraphrase: which light bulb maker runs the lamp", "expected": ["n2"]}
+{"query": "paraphrase: money back for the cable", "expected": ["n15"]}
+{"query": "paraphrase: what should I take to the doctor", "expected": ["n18"]}
+{"query": "paraphrase: what hot drink do I like", "expected": ["n9"]}
+{"query": "paraphrase: annual vehicle inspection", "expected": ["n22"]}
+{"query": "paraphrase: my cycling security", "expected": ["n4"]}
