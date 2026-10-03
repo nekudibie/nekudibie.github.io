@@ -105,11 +105,63 @@ box. Transcription needs `stt.provider: faster_whisper` on the brain; progress s
 Jobs page, results under the meeting entry. Expect several minutes per hour of audio on a
 CPU-only brain with the `base` model; measure and record the figure in docs/STATUS.md.
 
-## Stage 5: split the vault onto its own host
+## Stage 5: real hosts with systemd (brain, then vault)
 
-Set `vault.mode: remote`, `vault.url`, generate `COMPANION_VAULT_TOKEN` on both hosts, run
-`companion-vault serve` on the vault host (systemd unit in deploy/systemd). Checkpoint:
-`/readyz` on the API shows `vault: ok mode=remote`.
+On each rescued host, as the user that will run the services:
+
+```bash
+git clone https://github.com/nekudibie/nekudibie.github.io companion && cd companion
+deploy/scripts/check-host.sh            # architecture, Python, RAM, disk, GPU, audio tools
+deploy/scripts/setup-role.sh brain      # or: vault / desk. Installs only that role's packages, creates .env and config/local.yaml
+```
+
+Edit `config/local.yaml` (`api.host` to the LAN address or keep 127.0.0.1 behind Caddy,
+`llm`, `home`, `vault.mode`) and `.env` (tokens from `uv run companion-api make-token`), then:
+
+```bash
+uv run companion-api check-config
+deploy/scripts/install-units.sh brain --enable      # api + worker + nightly backup timer
+deploy/scripts/healthcheck.sh http://127.0.0.1:8710
+```
+
+Checkpoint: `systemctl status companion-api companion-worker` are active;
+`systemctl list-timers companion-backup.timer` shows the next 02:00 run; the desk opens the
+brain's address and connects.
+
+Vault host: `setup-role.sh vault`, set `vault.mode: remote` **on the brain** with
+`vault.url: http://<vault>:8720` and the same `COMPANION_VAULT_TOKEN` in both `.env` files,
+then `install-units.sh vault --enable` on the vault host and restart the brain's API.
+Checkpoint: brain `/readyz` shows `vault: ok mode=remote`. Home Assistant runs on the vault
+host with `deploy/compose/homeassistant.yml`.
+
+Containers instead of systemd: `deploy/compose/brain.yml` (Ollama, optionally the API and
+worker with `--profile containers`) and `deploy/compose/vault.yml`; the image is built from
+`deploy/docker/Dockerfile` with the locked dependencies.
+
+## Stage 6: network and TLS
+
+Keep every port off the internet. On the LAN either bind to the LAN address and firewall it
+to the desk and vault hosts (`sudo ufw allow from <desk-ip> to any port 8710`), or keep
+127.0.0.1 and put Caddy in front with its internal CA (`deploy/caddy/Caddyfile`) so the desk
+browser has HTTPS, which is also what browser microphone capture needs. Install Caddy's root
+certificate on the desk Pi. A WireGuard/Tailscale overlay is the simplest way to reach the
+assistant away from home.
+
+## Stage 7: updates and rollback
+
+`deploy/scripts/update.sh` backs up, fetches, stops the units, installs the locked
+dependencies, rebuilds the UI, runs migrations and restarts. It prints the rollback command;
+`deploy/scripts/update.sh --rollback <ref>` restores the code, and the pre-update backup set
+is there if a migration must be undone (`deploy/scripts/restore.sh`).
+
+## Stage 8: the robot body (simulation first)
+
+Nothing in this repository drives a motor. `robotics.mode: simulated` exposes the same
+bounded command API a real body would get (`/v1/robot/*`), with a watchdog, link-loss,
+bumper/cliff and latched emergency-stop behaviour you can exercise from the desk. Before any
+hardware: a microcontroller that owns the motor drivers and stops on its own watchdog, rated
+drivers, encoders, bumper and cliff sensors, a fused battery and a physical motor-power switch.
+The Pi/brain only ever sends bounded high-level commands over an authenticated link.
 
 ## Recovery
 * API won't start → `uv run companion-api check-config` prints the exact error.

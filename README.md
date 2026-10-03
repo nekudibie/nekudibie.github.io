@@ -54,6 +54,9 @@ verified on real hardware.
 | `uv run companion-api make-token` | generate a client token |
 | `uv run companion-api serve` / `companion-vault serve` | run one role |
 | `cd apps/desk && npm run build` | rebuild the desk UI the API serves |
+| `deploy/scripts/check-host.sh` | is this machine fit for a role? (arch, Python, RAM, disk, GPU, audio) |
+| `deploy/scripts/setup-role.sh brain\|vault\|desk` | install one role on a real host, then `install-units.sh <role> --enable` |
+| `deploy/scripts/update.sh` / `--rollback <ref>` | backup-first update, rollback |
 
 ## Where things are
 

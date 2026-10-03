@@ -39,6 +39,14 @@
 * Service-to-service calls (API → vault, API → Home Assistant, API → Ollama) use
   bearer tokens and explicit timeouts. Nothing is exposed to the internet.
 
+## Embodiment
+The robot API accepts only bounded high-level commands (no raw outputs, no limit overrides);
+limits live in configuration on the brain, not in the request. Stale commands, link loss,
+bumper/cliff events and the emergency stop halt motion in the simulator independently of
+any client or model, and the same contract is required of real hardware (microcontroller
+watchdog plus a physical motor-power switch). Robot clients get the `rover` role, which
+cannot write memory, control the home or view cameras.
+
 ## Known gaps (tracked in docs/STATUS.md)
 * Token revocation is by editing `.env`/config and restarting; a database-backed token
   table with revocation is planned.

@@ -30,6 +30,7 @@ from .routes import (
     memory,
     personal,
     reminders,
+    robot,
     settings,
     structured,
     tutor,
@@ -121,6 +122,7 @@ def create_app(cfg: AppConfig, *, state: AppState | None = None, **overrides: An
     app.include_router(reminders.router)
     app.include_router(tutor.router)
     app.include_router(personal.router)
+    app.include_router(robot.router)
     app.include_router(home.router)
     app.include_router(settings.router)
 

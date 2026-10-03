@@ -29,8 +29,11 @@ those two files alone unless Neku asks.
 ## Commands
 - `uv sync` installs every role for development (one lockfile: `uv.lock`).
 - `./deploy/scripts/dev.sh` one-command local start (creates `.env` tokens if missing).
-- `uv run pytest` runs unit + fixture-backed integration tests; `uv run ruff check .`.
+- `uv run pytest` runs unit + fixture-backed integration tests; `uv run ruff check .`; `uv run mypy`.
 - `cd apps/desk && npm ci && npm run build` builds the UI the API serves.
+- Real hosts: `deploy/scripts/check-host.sh`, `deploy/scripts/setup-role.sh brain|vault|desk`,
+  `deploy/scripts/install-units.sh <role> --enable`, `deploy/scripts/update.sh`.
+- Parallel shell calls must use absolute paths: a `cd` in one call changes the cwd of another.
 
 ## Decisions
 Durable decisions are ADRs in `docs/decisions/`. Add one when you change an

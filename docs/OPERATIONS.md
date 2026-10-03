@@ -3,8 +3,14 @@
 ## Start / stop
 * Development: `./deploy/scripts/dev.sh` (Ctrl-C stops). Separate processes:
   `uv run companion-api serve`, `uv run companion-vault serve`, `uv run companion-worker run`.
-* Production: systemd units in `deploy/systemd/` (`systemctl --user` or system scope);
-  Home Assistant and Ollama via `deploy/compose/`.
+* Production: `deploy/scripts/install-units.sh <role> --enable` installs hardened systemd
+  units (`companion-api`, `companion-worker` at lower CPU/IO priority, `companion-vault`,
+  `companion-backup.timer`; the desk's `companion-audio` is a user unit). Home Assistant and
+  Ollama via `deploy/compose/`. Shut down with `sudo systemctl stop companion-worker companion-api`
+  (the worker gets 90 s to finish a chunk; jobs resume after restart).
+* Load priority: the worker runs with `Nice=10` and best-effort IO; the queue keeps a slot for
+  interactive jobs; Ollama is set to one loaded model and one parallel request so a background
+  summary cannot evict the chat model.
 
 ## Health
 | Endpoint | Meaning |
@@ -101,6 +107,18 @@ is off unless `email.allow_bulk_ingest` is turned on.
   consumers to cache and to keep under 10 requests per second; both are built in.
 
 ## Updates and rollback
-`git pull && uv sync --all-packages --frozen && (cd apps/desk && npm ci && npm run build)`,
-then run migrations (`companion-api migrate`) and restart. Roll back by checking out the
-previous tag and restoring the pre-update backup set if a migration was applied.
+`deploy/scripts/update.sh` (backup → fetch → stop → `uv sync --frozen` → UI build → migrate →
+start) and `deploy/scripts/update.sh --rollback <ref>`. Migrations are forward-only; if one
+ran, restore the pre-update backup set after rolling the code back.
+
+## Troubleshooting
+| Symptom | Check |
+|---|---|
+| UI says "Cannot reach the companion API" | `systemctl status companion-api`; `journalctl -u companion-api -n 50`; firewall between desk and brain |
+| "model offline" badge | `curl http://<brain>:11434/api/version`; `ollama list`; `/readyz` detail says if the model lacks the `tools` capability |
+| Lights do nothing, UI shows fixture badge | `home.provider` is still `fixture`; set `home_assistant`, token and `allowed_entities` |
+| Transcription stuck in queued | worker not running (`systemctl status companion-worker`) or `stt.provider` disabled/fixture; `companion-worker list` |
+| Reminder never fired | `companion-worker` must be running (it ticks the scheduler); check the schedule's `next_run_at` in `GET /v1/schedules` |
+| Voice client: `arecord` not found / wrong device | `sudo apt install alsa-utils`; `arecord -l`; pass `--input-device plughw:X,Y` |
+| Gmail 403 | account is not a test user of the OAuth client, or scope mismatch; re-run `companion-api email-login` |
+| Disk full on the brain | recordings under `data/brain/media`; delete finished meetings from the Jobs page; `du -sh data/*` |

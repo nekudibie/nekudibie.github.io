@@ -5,6 +5,17 @@ the development container (x86_64, Python 3.12); **hardware-tested** = run on th
 device; **simulated** = fixture/simulator stands in for a real system and is labelled as
 such; **blocked** = waiting on something outside the code; **unimplemented** = not started.
 
+## Verification summary (this session)
+* 181 automated tests pass on Python 3.11, 3.12 and 3.13 (x86_64 development container);
+  `ruff check` and `mypy` clean; desk UI builds with `tsc` + Vite.
+* `./deploy/scripts/dev.sh` was run from a clean checkout: it installed the workspace, created
+  `.env` and `config/local.yaml`, served the UI at `/`, answered `/v1/me` with the generated
+  desk token, reported `/readyz` ready with vault/brain_db ok and every provider labelled
+  fixture, and answered "turn on the desk lamp" deterministically with the fixture badge.
+* Nothing has run on Neku's hardware yet; no benchmark figures exist. The git push to GitHub
+  failed with 403 (the Claude GitHub App has no access to this repository), so all commits
+  are local on branch `claude/wonderful-bell-ipz6yj` until access is granted.
+
 ## Milestone summary
 
 | # | Milestone | State |
@@ -17,8 +28,8 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 | 5 | Meetings | done, tested locally with fixture STT (persistent jobs, resumable transcription, consent-gated recording, draft actions with uncertainty) |
 | 6 | Tutor/reminders | done, tested locally (static exercise checks; schedules only on explicit acceptance; DST tests) |
 | 7 | Personal tools | done with fixtures and mock servers; **Gmail, Open-Meteo and Scryfall not yet exercised live** (egress blocked here; Gmail also needs Neku's OAuth client) |
-| 8 | Deployment/reliability | partly: dev script, Makefile; compose/systemd/backup scripts unimplemented |
-| 9 | Embodiment foundation | unimplemented |
+| 8 | Deployment/reliability | assets done and syntax/consistency-tested; **not yet run on a real host** (no systemd/Docker daemon in this container) |
+| 9 | Embodiment foundation | done, simulated and tested (bounded commands, watchdog, link-loss, bumper/cliff, e-stop, role denial) |
 
 ## What works now (tested locally)
 
@@ -145,6 +156,22 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   "What did I buy on Amazon" answers from stored purchases and says a confirmation is not
   proof of delivery.
 
+* **Deployment assets.** `check-host.sh` (arch/OS/Python/RAM/disk/GPU/audio report),
+  `setup-role.sh brain|vault|desk` (role-only `uv sync --frozen`, config/.env from examples,
+  kiosk autostart on the desk), hardened systemd units with the worker at lower CPU/IO
+  priority and a nightly backup timer, `update.sh` with backup-first and `--rollback`,
+  `healthcheck.sh`, Dockerfile with locked dependencies, compose files for Ollama (one
+  model, one parallel request), containerised API/worker/vault and Home Assistant, Caddy
+  internal-CA example for HTTPS on the LAN. Verified here by `bash -n`, YAML parsing and
+  unit content checks only (`tests/unit/test_deploy_assets.py`).
+* **Embodiment (simulation).** `/v1/robot/*` with bounded `MotionCommand`s (rejected, not
+  clamped, when outside the configured limits), server-side watchdog on every worker tick and
+  request, link-loss/bumper/cliff stops, latched e-stop needing reset, stop available to any
+  client that can see the robot, sensor injection admin-only. The `robot_command` tool lets
+  a model request only high-level actions at a fixed fraction of the limits. Rover role
+  cannot touch memory writes, home or cameras. (`tests/unit/test_robotics_sim.py`,
+  `tests/integration/test_robot_api.py`) **No motor output exists anywhere in the code.**
+
 ## Simulated (always labelled as fixtures)
 * Language model (`llm.provider: fixture`): pattern-based demo replies that still go through
   the real tool gateway.
@@ -165,8 +192,8 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   mirrors were used (see docs/SOURCES.md). Re-check flagged items on a normal connection.
 
 ## Known gaps / next actions
-1. Milestone 8: role-specific compose/systemd, setup scripts, backup timer, update/rollback,
-   Pi/Linux compatibility checks. Milestone 9: embodiment simulator.
+1. Run the deployment on Neku's real hosts (brain first) and record measured model/STT
+   latency and resource use in this file.
 2. Token revocation without restart; rate limiting.
 3. Browser-level UI test (Playwright) for the chat flow.
 4. HLS/WebRTC camera streams (HA `camera/stream` WebSocket command) when a real camera exists.

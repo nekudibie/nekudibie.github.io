@@ -52,6 +52,8 @@ class AppState:
     weather: Any = None
     cards: Any = None
     email: Any = None
+    robot: Any = None
+    _robot_wall: float | None = None
     warnings: list[str] = field(default_factory=list)
     started_at: float = field(default_factory=time.time)
     perm: type[Permission] = Permission
@@ -64,6 +66,17 @@ class AppState:
 
     def uptime_s(self) -> int:
         return int(time.time() - self.started_at)
+
+    def robot_tick(self) -> None:
+        """Advance the simulator by the wall-clock time elapsed since the last tick (watchdog enforcement)."""
+        if self.robot is None:
+            return
+        now = time.monotonic()
+        if self._robot_wall is not None:
+            dt = now - self._robot_wall
+            if dt > 0:
+                self.robot.tick(min(dt, 5.0))
+        self._robot_wall = now
 
 
 def build_state(cfg: AppConfig, **overrides: Any) -> AppState:
@@ -91,6 +104,12 @@ def build_state(cfg: AppConfig, **overrides: Any) -> AppState:
         prov = getattr(state, name)
         if prov is not None:
             state.extras[name] = prov
+    if cfg.robotics.mode == "simulated":
+        from companion_robotics import MotionLimits, RoverSimulator
+
+        state.robot = overrides.get("robot") or RoverSimulator(limits=MotionLimits(
+            max_linear_mps=cfg.robotics.max_linear_speed_mps, max_angular_rps=cfg.robotics.max_angular_speed_rps,
+            max_command_duration_s=cfg.robotics.max_command_duration_s, watchdog_timeout_s=cfg.robotics.watchdog_timeout_s))
     state.queue = JobQueue(store.db, state.clock)
     state.recordings = RecordingStore(store.db, cfg.media_dir, state.clock)
     state.scheduler = SchedulerStore(store.db, state.clock)
@@ -125,4 +144,5 @@ def build_worker(state: AppState) -> Any:
 
     services = WorkerServices(config=state.config, vault=state.vault, stt=state.stt, llm=state.llm, recordings=state.recordings, queue=state.queue, clock=state.clock, scheduler=state.scheduler)
     cfg = state.config.worker
-    return Worker(state.queue, HANDLERS, services, concurrency=cfg.concurrency, poll_interval_s=cfg.poll_interval_s, lease_s=cfg.lease_s, periodic=[state.scheduler.tick])
+    periodic = [state.scheduler.tick] + ([state.robot_tick] if state.robot is not None else [])
+    return Worker(state.queue, HANDLERS, services, concurrency=cfg.concurrency, poll_interval_s=cfg.poll_interval_s, lease_s=cfg.lease_s, periodic=periodic)

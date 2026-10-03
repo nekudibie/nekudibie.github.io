@@ -15,7 +15,14 @@ export default function ToolsPanel({ can }: { can: (p: string) => boolean }) {
   const [mailQ, setMailQ] = useState(""); const [mail, setMail] = useState<Mail | null>(null); const [mailStatus, setMailStatus] = useState<Awaited<ReturnType<typeof api.emailStatus>> | null>(null);
   const [orders, setOrders] = useState<{ merchant: string; order_ref: string; status: string; amount?: number | null; currency?: string | null; items: { name?: string }[]; updated_at: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [robot, setRobot] = useState<Awaited<ReturnType<typeof api.robotStatus>> | null | "off">(null);
 
+  useEffect(() => {
+    if (can("robot.status")) {
+      const load = () => api.robotStatus().then(setRobot).catch(() => setRobot("off"));
+      load(); const t = setInterval(load, 3000); return () => clearInterval(t);
+    }
+  }, []); // eslint-disable-line
   useEffect(() => {
     if (can("weather.read")) api.weather("week").then((w) => setWeather(w.data)).catch(() => setWeather(null));
     if (can("mtg.read")) api.decks().then(setDecks).catch(() => setDecks([]));
@@ -70,6 +77,22 @@ export default function ToolsPanel({ can }: { can: (p: string) => boolean }) {
             <textarea placeholder={"// Commander\n1 Thassa, Deep-Dwelling\n// Main\n1 Counterspell\n30 Island\nCUSTOM: My Card | rules text"} value={decklist} onChange={(e) => setDecklist(e.target.value)} style={{ marginTop: 6, fontFamily: "ui-monospace, monospace" }} />
             <button className="small primary" style={{ marginTop: 6 }} disabled={!deckName || !decklist} onClick={() => api.importDeck(deckName, deckFormat, decklist).then(() => { setDecklist(""); api.decks().then(setDecks); }).catch((er) => setError(er.message))}>Save deck</button>
           </>)}
+        </div>
+      )}
+      {can("robot.status") && robot !== "off" && (
+        <div className="card">
+          <div className="row" style={{ justifyContent: "space-between" }}><h2>Robot body</h2><span className="badge fixture">⚠ {robot?.mode === "simulated" ? "simulated · no motors" : robot?.mode}</span></div>
+          {robot ? (<>
+            <p><span className={`badge ${robot.state === "idle" ? "ok" : robot.state.startsWith("stopped") || robot.state === "estop" ? "bad" : "info"}`}>{robot.state.replace("_", " ")}</span> <span className="muted">{robot.reason}</span></p>
+            <dl className="kv"><dt>Pose</dt><dd>x {robot.pose.x_m.toFixed(2)} m · y {robot.pose.y_m.toFixed(2)} m · {robot.pose.theta_deg.toFixed(0)}°</dd><dt>Link</dt><dd>{robot.sensors.link_ok ? "ok" : "lost"}</dd><dt>Bumper / cliff</dt><dd>{robot.sensors.bumper_front ? "pressed" : "clear"} / {robot.sensors.cliff_front ? "detected" : "clear"}</dd><dt>Battery</dt><dd>{robot.sensors.battery_pct.toFixed(1)}%</dd><dt>Limits</dt><dd>{robot.limits.max_linear_mps} m/s · {robot.limits.max_angular_rps} rad/s · watchdog {robot.limits.watchdog_timeout_s}s</dd></dl>
+            <div className="row" style={{ marginTop: 8 }}>
+              <button className="danger" onClick={() => api.robotAction("stop").then(() => api.robotStatus().then(setRobot))}>■ Stop</button>
+              <button className="danger" onClick={() => api.robotAction("estop").then(() => api.robotStatus().then(setRobot))}>E-STOP</button>
+              {robot.estop_latched && can("robot.command") && <button onClick={() => api.robotAction("reset").then(() => api.robotStatus().then(setRobot)).catch((e) => setError(e.message))}>Reset e-stop</button>}
+              {can("robot.command") && ["left", "centre", "right"].map((d) => <button key={d} className="small" onClick={() => api.robotLook(d).then(() => api.robotStatus().then(setRobot)).catch((e) => setError(e.message))}>look {d}</button>)}
+            </div>
+            <p className="muted" style={{ fontSize: ".8rem" }}>{robot.note}</p>
+          </>) : <p className="muted">Loading…</p>}
         </div>
       )}
       {can("email.read") && (

@@ -25,6 +25,7 @@ from companion_contracts.tools import (
     MemorySaveArgs,
     MemorySearchArgs,
     OrdersSearchArgs,
+    RobotCommandArgs,
     ToolResult,
     TutorArgs,
     WeatherArgs,
@@ -429,8 +430,46 @@ async def orders_search(ctx: ToolContext, args: OrdersSearchArgs) -> ToolResult:
                       provider=prov.name if prov else "vault", is_fixture=bool(prov and prov.is_fixture), data={"count": len(rows)})
 
 
+# -- embodiment (simulation) ---------------------------------------------------------------
+async def robot_command(ctx: ToolContext, args: RobotCommandArgs) -> ToolResult:
+    """Bounded, high-level requests only; the simulator (and any real body) enforces the limits."""
+    from companion_robotics import MotionCommand
+
+    robot = ctx.state.robot
+    if robot is None:
+        return ToolResult(ok=False, content=json.dumps({"error": "robotics.mode is disabled"}), summary="no robot configured", error_code="not_configured")
+    ctx.state.robot_tick()
+    lim = robot.limits
+    if args.action == "status":
+        st = robot.status()
+        return ToolResult(content=json.dumps(st.model_dump(), default=str), summary=f"robot {st.state} ({st.mode})", data={"state": st.state, "mode": st.mode})
+    if args.action == "stop":
+        cmd = MotionCommand(kind="stop")
+    elif args.action == "look":
+        cmd = MotionCommand(kind="look", look=args.direction if args.direction in {"left", "right", "up", "down", "centre"} else "centre")
+    elif args.action == "dock":
+        cmd = MotionCommand(kind="dock", duration_s=min(args.duration_s or 3.0, lim.max_command_duration_s))
+    elif args.action == "move":
+        speed = lim.max_linear_mps * 0.5  # the model never picks a speed; a gentle fixed fraction of the limit
+        sign = -1.0 if args.direction == "backward" else 1.0
+        cmd = MotionCommand(kind="move", linear_mps=sign * speed, duration_s=min(args.duration_s or lim.max_command_duration_s, lim.max_command_duration_s), distance_m=min(args.distance_m, lim.max_distance_m) if args.distance_m is not None else None)
+    elif args.action == "turn":
+        rate = lim.max_angular_rps * 0.5
+        sign = -1.0 if args.direction == "right" else 1.0
+        angle = abs(args.angle_deg) if args.angle_deg is not None else 90.0
+        cmd = MotionCommand(kind="turn", angular_rps=sign * rate, duration_s=min(args.duration_s or lim.max_command_duration_s, lim.max_command_duration_s), angle_deg=min(angle, 180.0))
+    else:
+        return ToolResult(ok=False, content=json.dumps({"error": f"unknown action {args.action}"}), summary="unknown action", error_code="validation_failed")
+    st = robot.apply(cmd.model_copy(update={"client_id": ctx.identity.client_id}))
+    return ToolResult(content=json.dumps({"state": st.state, "reason": st.reason, "pose": st.pose.model_dump(), "mode": st.mode, "limits": lim.model_dump()}),
+                      summary=f"robot {st.state}: {st.reason} (simulated)", data={"state": st.state, "mode": st.mode}, provider="simulator", is_fixture=True)
+
+
 def register_builtin(gw: ToolGateway) -> None:
     st = gw.state
+    gw.register(name="robot_command", description="Ask the (simulated) robot body for a bounded action: stop, look, move a short distance, turn, dock, or report status. Limits are enforced outside the model.",
+                permission=Permission.ROBOT_COMMAND, args_model=RobotCommandArgs, handler=robot_command, risk="actuate", enabled=st.robot is not None,
+                disabled_reason=None if st.robot is not None else "robotics.mode is disabled", provider="simulator")
     gw.register(name="weather_forecast", description="Weather for today, tomorrow or the week at the configured location (cached; says when data is stale).",
                 permission=Permission.WEATHER_READ, args_model=WeatherArgs, handler=weather_forecast, enabled=st.weather is not None, disabled_reason=None if st.weather else "weather.provider is disabled",
                 provider=st.weather.name if st.weather else None)
