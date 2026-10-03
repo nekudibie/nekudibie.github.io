@@ -83,6 +83,7 @@ class AudioClient:
         self._ptt = threading.Event()
         self._stop_speaking = threading.Event()
         self.last: TurnResult | None = None
+        self._announced: set[str] = set()
 
     # -- state ---------------------------------------------------------
     def _set(self, state: str, detail: str = "") -> None:
@@ -255,6 +256,26 @@ class AudioClient:
         finally:
             self.capture.stop()
         return turns
+
+    async def announce_reminders(self) -> int:
+        """Speak delivered-but-unacknowledged reminders (polled while idle); acknowledgement stays on screen or by voice."""
+        if self.state not in {"idle"} or self.software_muted:
+            return 0
+        try:
+            r = await self._http.get("/v1/reminders/pending")
+        except httpx.TransportError:
+            return 0
+        if r.status_code != 200:
+            return 0
+        spoken = 0
+        for rem in r.json():
+            key = f"{rem['id']}:{rem.get('delivery_count', 1)}"
+            if key in self._announced:
+                continue
+            self._announced.add(key)
+            await self.speak(f"Reminder: {rem['title']}." + (f" {rem['body']}" if rem.get("body") else ""))
+            spoken += 1
+        return spoken
 
     async def aclose(self) -> None:
         await self._http.aclose()

@@ -1,0 +1,23 @@
+# Vault host.
+[Unit]
+Description=Companion memory vault
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=__REPO__/.env
+Environment=COMPANION_CONFIG=__REPO__/config/local.yaml
+ExecStart=__REPO__/.venv/bin/companion-vault serve
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=__REPO__/data
+
+[Install]
+WantedBy=multi-user.target

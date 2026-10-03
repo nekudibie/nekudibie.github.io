@@ -1,0 +1,17 @@
+[Unit]
+Description=Companion nightly backup (SQLite online backup + prune)
+
+[Service]
+Type=oneshot
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=__REPO__/.env
+Environment=COMPANION_CONFIG=__REPO__/config/local.yaml
+ExecStart=__REPO__/deploy/scripts/backup.sh
+Nice=15
+IOSchedulingClass=idle
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=__REPO__/data

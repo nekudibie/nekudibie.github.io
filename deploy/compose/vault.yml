@@ -1,0 +1,18 @@
+# Vault/home host: the memory vault service (containerised option). Home Assistant has its own
+# file (homeassistant.yml) because it needs host networking and privileges the vault does not.
+#   docker compose -f deploy/compose/vault.yml up -d
+services:
+  companion-vault:
+    build: { context: ../.., dockerfile: deploy/docker/Dockerfile }
+    image: companion:local
+    container_name: companion-vault
+    restart: unless-stopped
+    command: ["companion-vault", "serve"]
+    env_file: ../../.env
+    environment:
+      COMPANION_CONFIG: /app/config/local.yaml
+    volumes:
+      - ../../config:/app/config:ro
+      - ../../data:/app/data            # vault.db lives here: local disk, never SMB/NFS
+    ports:
+      - "8720:8720"

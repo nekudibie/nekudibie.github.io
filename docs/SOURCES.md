@@ -23,4 +23,8 @@ and should be re-read on a normal connection before relying on fine detail.
 | Gmail API messages.list/get | https://developers.google.com/workspace/gmail/api (via googleapis python client docs on GitHub) | 2026-10-03 | `q`, `pageToken`, `maxResults` ≤500; `format=metadata/full`; `internalDate` |
 | Gmail scopes / verification | https://developers.google.com/workspace/gmail/api/auth/scopes (*snippet*) | 2026-10-03 | `gmail.readonly` is a *restricted* scope; unverified apps limited to 100 test users |
 | Google OAuth for desktop apps | https://developers.google.com/identity/protocols/oauth2/native-app (*snippet*) | 2026-10-03 | Loopback redirect + PKCE |
+| SymPy parser transformations and `parse_expr` namespaces | https://docs.sympy.org/latest/modules/parsing.html (from training knowledge; verify on a normal connection) | 2026-10-03 | Allowlist tokeniser runs before `parse_expr`; `global_dict` has no builtins |
+| Python tutorial (course references) | https://docs.python.org/3/tutorial/ | 2026-10-03 | Lesson references point at section anchors; examples verified by executing them in tests |
+| Magic Comprehensive Rules 100.2a, 903.3, 903.5a-c | Wizards of the Coast, Comprehensive Rules (paraphrased; check the current edition) | 2026-10-03 | Quoted next to legality findings |
+| Scryfall `/cards/named` exact/fuzzy and 404 details | https://scryfall.com/docs/api/cards/named (*snippet*; site blocked) | 2026-10-03 | Fuzzy results are offered as suggestions, never substituted |
 | PyPI versions used for the lock | https://pypi.org | 2026-10-03 | See `uv.lock`; aarch64 wheel availability checked for ctranslate2, piper-tts, onnxruntime, cryptography, numpy |

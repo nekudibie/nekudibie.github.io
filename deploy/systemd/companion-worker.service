@@ -1,0 +1,29 @@
+# Brain host. Background jobs (transcription, summaries, reminders) at lower CPU/IO priority
+# so they never starve the interactive API and voice path.
+[Unit]
+Description=Companion job worker
+After=network-online.target companion-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=__REPO__/.env
+Environment=COMPANION_CONFIG=__REPO__/config/local.yaml
+ExecStart=__REPO__/.venv/bin/companion-worker run
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=90
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+CPUWeight=50
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=__REPO__/data
+
+[Install]
+WantedBy=multi-user.target

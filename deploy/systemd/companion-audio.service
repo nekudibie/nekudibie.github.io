@@ -1,0 +1,18 @@
+# Desk host, *user* service (needs the user's audio session): copy to ~/.config/systemd/user/
+# and enable with: systemctl --user enable --now companion-audio ; loginctl enable-linger $USER
+[Unit]
+Description=Companion native voice client (push-to-talk)
+After=sound.target network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=__REPO__
+EnvironmentFile=__REPO__/.env
+Environment=COMPANION_API_URL=__API_URL__
+ExecStart=__REPO__/.venv/bin/companion-audio --api __API_URL__ --input-device __MIC__ --output-device __SPEAKER__
+Restart=on-failure
+RestartSec=5
+StandardInput=null
+
+[Install]
+WantedBy=default.target

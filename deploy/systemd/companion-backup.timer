@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the companion backup every night at 02:00 (local time)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

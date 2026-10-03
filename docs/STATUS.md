@@ -15,8 +15,8 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 | 3 | Memory (structured memory, retrieval evaluation, backups) | done, tested locally (retrieval evaluation and restore test included) |
 | 4 | Voice | software done and tested with fixtures; real STT/TTS adapters import-checked only; **hardware and model validation pending** |
 | 5 | Meetings | done, tested locally with fixture STT (persistent jobs, resumable transcription, consent-gated recording, draft actions with uncertainty) |
-| 6 | Tutor/reminders | unimplemented |
-| 7 | Personal tools (email, orders, weather, maths, MTG) | unimplemented |
+| 6 | Tutor/reminders | done, tested locally (static exercise checks; schedules only on explicit acceptance; DST tests) |
+| 7 | Personal tools | done with fixtures and mock servers; **Gmail, Open-Meteo and Scryfall not yet exercised live** (egress blocked here; Gmail also needs Neku's OAuth client) |
 | 8 | Deployment/reliability | partly: dev script, Makefile; compose/systemd/backup scripts unimplemented |
 | 9 | Embodiment foundation | unimplemented |
 
@@ -107,6 +107,44 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   (`tests/integration/test_meetings.py`). **Fixture STT only here; the real pipeline
   (faster-whisper on the brain) is untested until a model host exists.**
 
+* **Scheduler and reminders.** Persistent schedules in Europe/London; occurrences resolved
+  with zoneinfo so 19:30 stays 19:30 across the March and October clock changes (tested on
+  2026-03-29 and 2026-10-25); one alarm per occurrence however often the worker ticks; after
+  downtime only the latest missed occurrence fires within the grace window and older ones
+  are marked missed (no alarm storm); snooze/acknowledge; pause/resume/cancel/reschedule.
+  Delivery is a server row the desk UI banner and the audio client poll; no model involved.
+  (`tests/unit/test_scheduler.py`, `tests/integration/test_tutor_and_reminders.py`)
+* **Python tutor.** Eight curated lessons referencing the official tutorial; every example's
+  output is executed and verified by the test suite. Exercises are checked *statically*
+  (AST requirements, forbidden constructs, user-reported output) and labelled as such;
+  hints are revealed one per failed attempt; progress comes only from attempts
+  (`in_progress` → `needs_review` → `mastered`), and the next lesson is chosen from it
+  (review first, with a focus note on weak topics). Course plans are proposed as data and a
+  lesson schedule exists only after the user accepts one; accepting again replaces it.
+  Chat: "teach me Python" proposes, never schedules. **No code execution sandbox exists;**
+  the Learn page says so. (`tests/unit/test_tutor.py`)
+* **Weather.** Open-Meteo adapter (verified against the documented request/response shape
+  with a mock server): disk cache with fetch time, stale labelling when a refresh fails,
+  CC BY attribution shown; fixture provider labelled "invented numbers".
+* **Maths.** SymPy behind an allowlist tokeniser (no builtins, no attribute access, exponent
+  cap); solve/simplify/differentiate/integrate/evaluate with exact and approximate results;
+  every answer says it was computed, not guessed. Injection attempts are rejected before
+  parsing (tests cover `__import__`, `open`, attribute access, huge powers).
+* **Magic decks.** Decklists saved as vault documents (sections, set codes, custom cards
+  kept apart); legality from the card provider's `legalities` plus Comprehensive Rules
+  100.2a / 903.5a-c quoted with each finding; colour identity, singleton/four-copy and deck
+  size checks; ambiguous names are asked about, fuzzy matches offered not substituted;
+  synergy is explicitly left as opinion. Scryfall adapter honours its headers, pacing and
+  24 h cache rules (mock-tested).
+* **Email and orders.** Read-only provider protocol; Gmail adapter (gmail.readonly scope,
+  PKCE loopback consent via `companion-api email-login`, Fernet-encrypted token file,
+  refresh on expiry, paging, bounded retries on 429/5xx, 403 guidance) tested with a mock
+  Google; fixture mailbox with an injection email. Order extraction (merchant, reference,
+  items, amount, status) with payment-detail redaction; sync de-duplicates by message id and
+  never regresses a status (confirmation → dispatch → delivered; refund/cancel terminal).
+  "What did I buy on Amazon" answers from stored purchases and says a confirmation is not
+  proof of delivery.
+
 ## Simulated (always labelled as fixtures)
 * Language model (`llm.provider: fixture`): pattern-based demo replies that still go through
   the real tool gateway.
@@ -120,12 +158,15 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   supplied.
 * Audio hardware validation (echo, interruption, latency) and real STT/TTS model runs: no
   microphone/speaker here and model downloads are blocked from this container.
-* Email provider: awaiting confirmation (Gmail assumed as the likely first adapter).
+* Email: Gmail adapter is built but connecting it needs Neku's own Google Cloud OAuth
+  client (Desktop type) and consent; see docs/OPERATIONS.md. Live Open-Meteo/Scryfall calls
+  were impossible from this container (egress blocked) and remain to be smoke-tested.
 * Several vendor documentation sites were blocked by the container's egress proxy; GitHub
   mirrors were used (see docs/SOURCES.md). Re-check flagged items on a normal connection.
 
 ## Known gaps / next actions
-1. Milestone 6: Python tutor, restart-safe Europe/London reminders with DST tests.
+1. Milestone 8: role-specific compose/systemd, setup scripts, backup timer, update/rollback,
+   Pi/Linux compatibility checks. Milestone 9: embodiment simulator.
 2. Token revocation without restart; rate limiting.
 3. Browser-level UI test (Playwright) for the chat flow.
 4. HLS/WebRTC camera streams (HA `camera/stream` WebSocket command) when a real camera exists.

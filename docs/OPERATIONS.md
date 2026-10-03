@@ -73,9 +73,32 @@ immediately after restart.
 * `DELETE /v1/memory/documents/{id}` removes text and index entries and keeps a tombstone
   (title, hash, timestamps) for audit. `companion-vault stats` shows tombstone counts.
 
-## Email (Gmail, read-only) — Milestone 7
-Documented when implemented: creating a Desktop OAuth client, `gmail.readonly` scope, local
-loopback consent flow, encrypted token file, revoke procedure.
+## Email (Gmail, read-only)
+1. In Google Cloud Console create a project, enable the **Gmail API**, configure the OAuth
+   consent screen as *External* with yourself as a **test user** (the `gmail.readonly` scope is
+   a *restricted* scope; an unverified app is fine for its own test users, up to 100), and
+   create an OAuth client of type **Desktop app**. Copy its client id and secret into `.env`
+   as `COMPANION_GMAIL_CLIENT_ID` / `COMPANION_GMAIL_CLIENT_SECRET`.
+2. Set `COMPANION_TOKEN_KEY` to a long random string (`openssl rand -base64 32`) and
+   `email.provider: gmail` in `config/local.yaml`.
+3. On the brain host run `uv run companion-api email-login`. It opens the consent page
+   (or prints the address), receives the code on `127.0.0.1`, exchanges it with PKCE and
+   stores the tokens encrypted in `data/secrets/email_tokens.enc` (mode 600).
+4. `GET /v1/email/status` should report "Gmail connected as … (read-only)". The scope never
+   allows sending, deleting or labelling.
+5. To disconnect: `uv run companion-api email-logout` (revokes at Google and deletes the file),
+   and/or remove the app at https://myaccount.google.com/permissions.
+Order sync only runs when you ask ("what did I buy…", the Tools page button); bulk ingestion
+is off unless `email.allow_bulk_ingest` is turned on.
+
+## Weather, maths and card data
+* Weather: set `weather.provider: open_meteo`, `latitude`, `longitude`, `location_name`. The
+  forecast is cached in `data/cache/weather.json` for `cache_ttl_s`; when a refresh fails the
+  cached one is shown and marked stale. Attribution to Open-Meteo is shown in the UI (CC BY 4.0).
+* Maths needs nothing; it is SymPy with an allowlisted parser.
+* Cards: `mtg.provider: scryfall` uses `https://api.scryfall.com` with the configured
+  `user_agent`, paced requests and a 24-hour cache in `data/cache/scryfall/`. Scryfall asks
+  consumers to cache and to keep under 10 requests per second; both are built in.
 
 ## Updates and rollback
 `git pull && uv sync --all-packages --frozen && (cd apps/desk && npm ci && npm run build)`,

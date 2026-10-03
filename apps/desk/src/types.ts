@@ -53,3 +53,11 @@ export interface Job { id: string; kind: string; status: string; priority: numbe
 export interface Recording { id: string; title: string; status: string; started_at: string; stopped_at?: string | null; chunk_count: number; audio_ms: number; paused_total_ms: number; transcript_document_id?: string | null; summary_document_id?: string | null; error?: string | null; route: string }
 export interface Segment { id: string; start_ms: number; end_ms: number; text: string; speaker?: string | null; confidence?: number | null }
 export interface ActionItem { id: string; title: string; owner?: string | null; owner_confidence: number; due_at?: string | null; due_text?: string | null; due_confidence: number; status: string; source_quote?: string | null; meeting_id?: string | null }
+
+export interface Reminder { id: string; schedule_id: string; due_at: string; fired_at?: string | null; status: string; title: string; body: string; kind: string; delivery_count: number; payload: Record<string, unknown> }
+export interface Schedule { id: string; kind: string; title: string; body: string; timezone: string; rule: { type: string; at_local?: string; time_local?: string; days?: number[] }; next_run_at?: string | null; status: string }
+
+export interface LessonSummary { id: string; title: string; objectives: string[]; topics: string[]; minutes: number; exercises: number; status: string; attempts: number }
+export interface LessonView { id: string; title: string; objectives: string[]; explanation: string; examples: { code: string; output: string; note: string }[]; exercises: { id: string; prompt: string; starter: string; topics: string[]; hints_available: number; attempts: number; needs_output: boolean }[]; topics: string[]; references: string[]; next_steps: string; minutes: number; progress: { status: string; attempts: number; weak_topics: string[] } | null }
+export interface AttemptResult { result: { passed: boolean; score: number; feedback: string[]; passed_checks: string[]; failed_checks: string[]; syntax_error?: string | null; method: string; output_checked: boolean }; progress: { status: string; attempts: number; weak_topics: string[] }; hint?: string | null; solution_notes?: string | null }
+export interface Proposal { id: string; title: string; days: number[]; time_local: string; lessons_per_week: number; weeks: number; description: string }

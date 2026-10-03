@@ -22,7 +22,7 @@ def test_remember_then_recall_with_citation(client):
 
 def test_missing_evidence_gives_honest_answer(client):
     cid = new_conversation(client)
-    out = text_of(sse(client, cid, "What did I buy from Amazon last week?"))
+    out = text_of(sse(client, cid, "What did we decide about the Orion launch?"))
     assert "couldn't find" in out and "won't guess" in out
 
 

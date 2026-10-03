@@ -28,6 +28,12 @@ _QUESTION_RE = re.compile(
 _TIME_RE = re.compile(r"\b(what time|the time|what('s| is) the date|today's date|what day)\b", re.I)
 _WEATHER_RE = re.compile(r"\bweather|forecast|rain|umbrella\b", re.I)
 _MATHS_RE = re.compile(r"(solve|simplify|differentiate|integrate|evaluate|calculate|what is)\s+(.+)", re.I)
+_TUTOR_PROPOSE_RE = re.compile(r"\b(teach me|learn|start learning|course)\b.*\bpython\b|\bpython\b.*\b(course|lessons?)\b", re.I)
+_TUTOR_NEXT_RE = re.compile(r"\b(next|today'?s)\s+(lesson|exercise)\b|\bwhat should i (learn|practise|practice)\b", re.I)
+_TUTOR_STATUS_RE = re.compile(r"\bhow am i (doing|getting on)\b|\bmy (python )?progress\b", re.I)
+_DECK_RE = re.compile(r"\b(?:does|would|is|can)\s+(.+?)\s+(?:work|fit|go|be legal|legal|ok|okay|allowed)\s+in\s+(?:my\s+)?(.+?)\s+deck\b", re.I)
+_EMAIL_RE = re.compile(r"\bsearch\s+(?:my\s+)?(?:e-?mails?|inbox|mail)\s+for\s+(.+?)[?.!]*$", re.I)
+_ORDERS_RE = re.compile(r"\bwhat\s+(?:did|have)\s+i\s+(?:recently\s+)?(?:buy|bought|order(?:ed)?|purchase[d]?)\b(?:\s+(?:on|from|at)\s+([A-Za-z][\w'& ]{1,30}?))?(?:\s+(?:recently|last week|last month|this month))?[?.!]*$", re.I)
 _MEETING_ACTION_RE = re.compile(r"\b(action|actions|owner|deadline|follow[- ]?up)\b.*\bmeeting\b|\bmeeting\b.*\b(action|actions)\b", re.I)
 
 
@@ -114,6 +120,25 @@ class FixtureProvider:
         if _WEATHER_RE.search(user) and _tool_available(tools, "weather_forecast"):
             day = "tomorrow" if "tomorrow" in user.lower() else ("week" if "week" in user.lower() else "today")
             return ToolCall(id=new_id("call"), name="weather_forecast", arguments={"day": day})
+        dm = _DECK_RE.search(user)
+        if dm and _tool_available(tools, "deck_card_check"):
+            return ToolCall(id=new_id("call"), name="deck_card_check", arguments={"deck": dm.group(2).strip(), "card": dm.group(1).strip()})
+        em = _EMAIL_RE.search(user)
+        if em and _tool_available(tools, "email_search"):
+            return ToolCall(id=new_id("call"), name="email_search", arguments={"query": em.group(1).strip(), "limit": 5})
+        om = _ORDERS_RE.search(user)
+        if om and _tool_available(tools, "orders_search"):
+            args = {"days": 90}
+            if om.group(1):
+                args["merchant"] = om.group(1).strip()
+            return ToolCall(id=new_id("call"), name="orders_search", arguments=args)
+        if _tool_available(tools, "tutor"):
+            if _TUTOR_NEXT_RE.search(user):
+                return ToolCall(id=new_id("call"), name="tutor", arguments={"action": "next_lesson"})
+            if _TUTOR_STATUS_RE.search(user):
+                return ToolCall(id=new_id("call"), name="tutor", arguments={"action": "status"})
+            if _TUTOR_PROPOSE_RE.search(user):
+                return ToolCall(id=new_id("call"), name="tutor", arguments={"action": "propose_course", "goal": user[:300]})
         if _MEETING_ACTION_RE.search(user) and _tool_available(tools, "meeting_query"):
             args: dict[str, Any] = {"query": user[:300]}
             nm = re.search(r"\bfrom (?:the |my |our )?(.+?) (?:meeting|sync|call|standup|retro)\b", user, re.I)
@@ -170,7 +195,32 @@ class FixtureProvider:
         if tool_name == "weather_forecast":
             return str(data.get("summary", "No forecast available."))
         if tool_name == "maths":
-            return str(data.get("explanation") or data.get("result") or "I couldn't work that out.")
+            return str(data.get("explanation") or data.get("result") or "I couldn't work that out.") + " (worked out with SymPy, not in my head)"
+        if tool_name == "deck_card_check":
+            if data.get("ambiguous"):
+                return f"Which card do you mean: {', '.join(data['ambiguous'])}?"
+            if not data.get("card"):
+                return f"I couldn't find a card called “{data.get('card_query')}”. Check the spelling, or mark it as a custom card in the deck."
+            verdict = "is legal" if data.get("legal") else "is not legal"
+            reasons = "; ".join(f["detail"] + (f" (rule {f['rule']})" if f.get("rule") else "") for f in data.get("findings", []))
+            fx = " Note: fixture card data, not current Scryfall data." if data.get("is_fixture") else ""
+            return f"{data['card']['name']} {verdict} in {data['deck']} ({data['format']}): {reasons} Whether it suits the deck's plan is a separate question.{fx}"
+        if tool_name == "email_search":
+            msgs = data.get("messages") or []
+            if not msgs:
+                return f"No emails matched “{data.get('query')}”."
+            lines = "; ".join(f"{m['date'][:10] if m.get('date') else '?'} {m['from'].split('<')[0].strip()}: {m['subject']} [S{i}]" for i, m in enumerate(msgs[:3], start=1))
+            return f"Found {data.get('count')} email(s): {lines}." + (" (fixture mailbox)" if data.get("is_fixture") else "")
+        if tool_name == "orders_search":
+            rows = data.get("purchases") or []
+            if not rows:
+                return "I found no purchases in that period."
+            parts = []
+            for r in rows[:4]:
+                items = ", ".join(i for i in r.get("items") or [] if i) or "items not listed"
+                amt = f" {r['currency'] or ''}{r['amount']:.2f}".strip() if r.get("amount") is not None else ""
+                parts.append(f"{r['merchant']} {r['order_ref']}: {items}{(' ' + amt) if amt else ''}, status {r['status']}")
+            return "; ".join(parts) + ". " + str(data.get("note", "")) + (" (fixture mailbox)" if data.get("is_fixture") else "")
         if tool_name == "meeting_query":
             if data.get("ambiguous"):
                 opts = "; ".join(f"{c['title']} on {c['date']}" for c in data.get("candidates", []))
@@ -190,6 +240,19 @@ class FixtureProvider:
             if data.get("meetings"):
                 return "I found the meeting but nothing in it matched that question."
             return "I have no recorded meetings matching that."
+        if tool_name == "tutor":
+            if data.get("proposals"):
+                opts = " ".join(f"({i}) {p['title']}." for i, p in enumerate(data["proposals"], start=1))
+                return f"I can teach {data.get('course')} in {data.get('lessons')} lessons. Options: {opts} Pick one on the Learn page; nothing is scheduled until you choose."
+            if data.get("lesson_id"):
+                return f"{data.get('reason')} {data.get('title')}: " + "; ".join(data.get("objectives", [])[:3]) + f". About {data.get('minutes')} minutes. I've opened it on the Learn page."
+            if data.get("done"):
+                return str(data.get("reason"))
+            if "mastered" in data:
+                nxt = f" Next: {data['next']}." if data.get("next") else ""
+                return f"You've mastered {data['mastered']} of {data['lessons']} lessons across {data['attempts']} exercise attempts.{nxt}"
+            if "weak_topics" in data:
+                return f"Topics to revisit: {', '.join(data['weak_topics']) or 'none'}. {data.get('suggestion', '')}"
         if tool_name == "meeting_control":
             return f"Recording {data.get('status')}." if data.get("status") else "Done."
         return f"Done ({tool_name}): {json.dumps(data)[:300]}"

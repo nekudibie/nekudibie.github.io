@@ -115,6 +115,16 @@ def main(argv: list[str] | None = None) -> int:
             print("Enter = start/stop talking, s = stop speaking, m = mute toggle, q = quit")
             loop = asyncio.get_running_loop()
             recording: asyncio.Task | None = None
+
+            async def reminder_poll() -> None:
+                while True:
+                    await asyncio.sleep(15)
+                    try:
+                        await client.announce_reminders()
+                    except Exception:  # noqa: BLE001 - never let a reminder poll kill the client
+                        log.exception("reminder poll failed")
+
+            poller = asyncio.create_task(reminder_poll())
             while True:
                 line = await loop.run_in_executor(None, sys.stdin.readline)
                 cmd = line.strip().lower()
@@ -133,6 +143,7 @@ def main(argv: list[str] | None = None) -> int:
                     recording = None
                     print(f"\nheard: {res.transcript!r}\nreply: {res.reply}" + (f"\nerror: {res.error}" if res.error else ""))
                     _save_state({"conversation_id": cfg.conversation_id})
+            poller.cancel()
             return 0
         finally:
             await client.aclose()

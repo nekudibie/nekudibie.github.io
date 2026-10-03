@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .common import Anchor, Provenance, Source
 
 DocumentKind = Literal[
-    "note", "decision", "fact", "action", "document", "meeting_transcript", "meeting_summary", "email", "lesson_note"
+    "note", "decision", "fact", "action", "document", "meeting_transcript", "meeting_summary", "email", "lesson_note", "deck"
 ]
 Scope = Literal["owner", "shared", "private"]
 

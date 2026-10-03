@@ -11,7 +11,16 @@ from companion_core.clock import Clock, SystemClock
 from companion_core.config import AppConfig
 from companion_core.db import Database
 from companion_core.logging import get_logger
-from companion_integrations.factory import build_home, build_llm, build_stt, build_tts, build_vault
+from companion_integrations.factory import (
+    build_cards,
+    build_email,
+    build_home,
+    build_llm,
+    build_stt,
+    build_tts,
+    build_vault,
+    build_weather,
+)
 from companion_integrations.home.base import HomeProvider
 from companion_integrations.llm.base import LLMProvider
 from companion_integrations.speech.base import STTProvider, TTSProvider
@@ -40,6 +49,9 @@ class AppState:
     recordings: Any = None
     scheduler: Any = None
     worker: Any = None
+    weather: Any = None
+    cards: Any = None
+    email: Any = None
     warnings: list[str] = field(default_factory=list)
     started_at: float = field(default_factory=time.time)
     perm: type[Permission] = Permission
@@ -72,6 +84,13 @@ def build_state(cfg: AppConfig, **overrides: Any) -> AppState:
         tts=overrides["tts"] if "tts" in overrides else build_tts(cfg),
         warnings=warnings,
     )
+    state.weather = overrides["weather"] if "weather" in overrides else build_weather(cfg, clock=state.clock)
+    state.cards = overrides["cards"] if "cards" in overrides else build_cards(cfg, clock=state.clock)
+    state.email = overrides["email"] if "email" in overrides else build_email(cfg)
+    for name in ("weather", "cards", "email"):
+        prov = getattr(state, name)
+        if prov is not None:
+            state.extras[name] = prov
     state.queue = JobQueue(store.db, state.clock)
     state.recordings = RecordingStore(store.db, cfg.media_dir, state.clock)
     state.scheduler = SchedulerStore(store.db, state.clock)

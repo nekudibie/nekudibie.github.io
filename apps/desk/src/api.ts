@@ -1,4 +1,4 @@
-import type { ActionItem, Decision, Dependency, Doc, Entity, CameraView, Fact, Job, Me, Message, Recording, SearchHit, Segment, StreamEvent } from "./types";
+import type { ActionItem, AttemptResult, Decision, Dependency, Doc, Entity, CameraView, Fact, Job, LessonSummary, LessonView, Me, Message, Proposal, Recording, Reminder, Schedule, SearchHit, Segment, StreamEvent } from "./types";
 
 const LS_URL = "companion.apiUrl";
 const LS_TOKEN = "companion.token";
@@ -61,6 +61,26 @@ export const api = {
   retractFact: (id: string, reason = "") => req<Fact>(`/v1/memory/facts/${id}/retract`, { method: "POST", body: JSON.stringify({ reason }) }),
   updateFact: (id: string, value: string, reason = "") => req<Fact>(`/v1/memory/facts/${id}/update`, { method: "POST", body: JSON.stringify({ value, reason }) }),
   decisions: () => req<Decision[]>("/v1/memory/decisions"),
+  weather: (day = "week") => req<{ ok: boolean; data: { location: string; days: { date: string; description: string; temp_max_c: number | null; temp_min_c: number | null; precipitation_probability_pct: number | null }[]; fetched_at: string; is_stale: boolean; stale_reason?: string | null; is_fixture: boolean; attribution: string } }>(`/v1/weather?day=${day}`),
+  maths: (expression: string, task: string) => req<{ ok: boolean; data: { parsed: string; result: string; approx?: string | null; explanation: string; steps: string[]; method: string } }>("/v1/maths", { method: "POST", body: JSON.stringify({ expression, task }) }),
+  decks: () => req<{ document_id: string; name: string; format: string; commander?: string | null; main_count: number; custom_cards: string[] }[]>("/v1/mtg/decks"),
+  importDeck: (name: string, format: string, decklist: string, commander?: string) => req<unknown>("/v1/mtg/decks", { method: "POST", body: JSON.stringify({ name, format, decklist, commander: commander || null }) }),
+  checkDeckCard: (id: string, card: string) => req<{ data: { legal: boolean | null; ambiguous: string[]; findings: { detail: string; ok: boolean; rule?: string | null }[]; card?: { name: string } | null; is_fixture: boolean; note: string; rules: Record<string, string> } }>(`/v1/mtg/decks/${id}/check`, { method: "POST", body: JSON.stringify({ card }) }),
+  emailStatus: () => req<{ enabled: boolean; provider?: string | null; is_fixture?: boolean; account?: string; read_only?: boolean; health?: { status: string; detail: string } }>("/v1/email/status"),
+  emailSearch: (query: string) => req<{ messages: { id: string; subject: string; sender: string; date?: string | null; snippet: string; link?: string | null }[]; is_fixture: boolean }>("/v1/email/search", { method: "POST", body: JSON.stringify({ query, limit: 10 }) }),
+  orders: (sync: boolean) => req<unknown>(`/v1/orders?days=365&sync=${sync}`),
+  tutorCourse: () => req<{ course: { id: string; title: string; description: string }; lessons: LessonSummary[]; summary: { lessons: number; mastered: number; needs_review: string[]; weak_topics: string[]; attempts: number } }>("/v1/tutor/course"),
+  tutorNext: () => req<{ lesson: LessonView | null; reason: string }>("/v1/tutor/next"),
+  tutorLesson: (id: string) => req<LessonView>(`/v1/tutor/lessons/${id}`),
+  tutorAttempt: (lesson_id: string, exercise_id: string, code: string, output: string | null) => req<AttemptResult>("/v1/tutor/attempts", { method: "POST", body: JSON.stringify({ lesson_id, exercise_id, code, output: output || null }) }),
+  tutorPropose: (goal: string, time_local: string) => req<{ proposals: Proposal[]; note: string }>("/v1/tutor/plan/propose", { method: "POST", body: JSON.stringify({ goal, time_local }) }),
+  tutorAccept: (proposal_id: string, time_local: string) => req<{ schedule: Schedule }>("/v1/tutor/plan/accept", { method: "POST", body: JSON.stringify({ proposal_id, time_local }) }),
+  tutorPlan: () => req<Schedule[]>("/v1/tutor/plan"),
+  pendingReminders: () => req<Reminder[]>("/v1/reminders/pending"),
+  ackReminder: (id: string) => req<Reminder>(`/v1/reminders/${id}/ack`, { method: "POST" }),
+  snoozeReminder: (id: string, minutes: number) => req<Reminder>(`/v1/reminders/${id}/snooze`, { method: "POST", body: JSON.stringify({ minutes }) }),
+  schedules: () => req<Schedule[]>("/v1/schedules"),
+  scheduleAction: (id: string, action: "pause" | "resume" | "cancel") => req<Schedule>(`/v1/schedules/${id}/${action}`, { method: "POST" }),
   jobs: () => req<{ jobs: Job[]; counts: Record<string, number>; worker_embedded: boolean }>("/v1/jobs"),
   cancelJob: (id: string) => req<Job>(`/v1/jobs/${id}/cancel`, { method: "POST" }),
   retryJob: (id: string) => req<Job>(`/v1/jobs/${id}/retry`, { method: "POST" }),

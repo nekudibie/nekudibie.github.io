@@ -4,18 +4,20 @@ import Chat from "./components/Chat";
 import { StateChip } from "./components/Common";
 import HomePanel from "./components/HomePanel";
 import NotesPanel from "./components/NotesPanel";
+import ReminderBanner from "./components/ReminderBanner";
 import JobsPanel from "./components/JobsPanel";
-import { LearnPanel } from "./components/Placeholders";
+import LearnPanel from "./components/LearnPanel";
 import SettingsPanel from "./components/SettingsPanel";
 import SourcesDrawer from "./components/SourcesDrawer";
+import ToolsPanel from "./components/ToolsPanel";
 import TranscriptPanel from "./components/TranscriptPanel";
 import { useClock, useConnection, useLocalState } from "./hooks";
 import type { AssistantState, Source, UIEv } from "./types";
 
-type Tab = "home" | "chat" | "notes" | "transcript" | "learn" | "jobs" | "settings";
+type Tab = "home" | "chat" | "notes" | "transcript" | "learn" | "jobs" | "tools" | "settings";
 const TABS: { id: Tab; label: string }[] = [
   { id: "home", label: "Home" }, { id: "chat", label: "Chat" }, { id: "notes", label: "Notes" }, { id: "transcript", label: "Transcript" },
-  { id: "learn", label: "Learn" }, { id: "jobs", label: "Jobs" }, { id: "settings", label: "Settings" },
+  { id: "learn", label: "Learn" }, { id: "jobs", label: "Jobs" }, { id: "tools", label: "Tools" }, { id: "settings", label: "Settings" },
 ];
 
 export default function App() {
@@ -30,6 +32,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [recording, setRecording] = useState<{ active: boolean; paused: boolean }>({ active: false, paused: false });
   const [startIntent, setStartIntent] = useState<{ title: string } | null>(null);
+  const [learnIntent, setLearnIntent] = useState<{ kind: string; lesson_id?: string } | null>(null);
 
   const setState = useCallback((s: AssistantState | ((prev: AssistantState) => AssistantState), detail?: string) => {
     setStateRaw((prev) => (typeof s === "function" ? s(prev) : s)); setStateDetail(detail);
@@ -42,7 +45,7 @@ export default function App() {
       if (e.payload.mute === false) setState("idle");
       if (e.payload.stop_speaking) setToast("Stopped.");
     } else if (e.action === "show_sources") setSources((e.payload.sources as Source[]) || []);
-    else if (e.action === "open_panel") { setTab(String(e.payload.panel) as Tab); if (e.payload.intent === "start_recording") setStartIntent({ title: String(e.payload.title || "") }); }
+    else if (e.action === "open_panel") { setTab(String(e.payload.panel) as Tab); if (e.payload.intent === "start_recording") setStartIntent({ title: String(e.payload.title || "") }); if (e.payload.intent === "open_lesson" || e.payload.intent === "choose_plan") setLearnIntent({ kind: String(e.payload.intent), lesson_id: e.payload.lesson_id ? String(e.payload.lesson_id) : undefined }); }
     else if (e.action === "set_recording_indicator") setRecording({ active: !!e.payload.active, paused: !!e.payload.paused });
   }, [setState, setTab]);
 
@@ -67,6 +70,7 @@ export default function App() {
         )}
         {conn.phase === "unreachable" && <div className="banner bad">Cannot reach the companion API at {location.origin}. The screen will keep retrying.</div>}
         {toast && <div className="banner">{toast} <button className="small" onClick={() => setToast(null)}>ok</button></div>}
+        <ReminderBanner enabled={conn.phase === "ok"} />
         {tab === "home" && (
           <div className="grid">
             <div className="card">
@@ -84,10 +88,11 @@ export default function App() {
         )}
         {tab === "notes" && conn.phase === "ok" && <NotesPanel canWrite={can("memory.write")} canDelete={can("memory.delete")} />}
         {tab === "transcript" && conn.phase === "ok" && <TranscriptPanel onOpen={(id) => { setConversationId(id); setTab("chat"); }} />}
-        {tab === "learn" && <LearnPanel />}
+        {tab === "learn" && conn.phase === "ok" && <LearnPanel intent={learnIntent} />}
         {tab === "jobs" && conn.phase === "ok" && <JobsPanel canRecord={can("meeting.record")} onRecordingState={(a, p) => setRecording({ active: a, paused: p })} startIntent={startIntent} />}
+        {tab === "tools" && conn.phase === "ok" && <ToolsPanel can={can} />}
         {tab === "settings" && <SettingsPanel conn={conn} />}
-        {tab !== "settings" && tab !== "learn" && tab !== "jobs" && conn.phase === "checking" && <p className="muted">Connecting…</p>}
+        {tab !== "settings" && conn.phase === "checking" && <p className="muted">Connecting…</p>}
       </main>
       {sources && <SourcesDrawer sources={sources} onClose={() => setSources(null)} />}
     </div>

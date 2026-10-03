@@ -64,16 +64,19 @@ wake_word:
   enabled: false
 
 weather:
-  provider: fixture           # fixture | open_meteo | disabled
-  latitude: null
-  longitude: null
-  location_name: ""
+  provider: fixture           # fixture | open_meteo | disabled  (Open-Meteo: free, no key, attribution shown)
+  latitude: null              # e.g. 53.80
+  longitude: null             # e.g. -1.55
+  location_name: ""           # e.g. Leeds
 
 email:
-  provider: fixture           # fixture | gmail | disabled  (read-only; see docs/OPERATIONS.md for OAuth setup)
+  provider: fixture           # fixture | gmail | disabled  (read-only scope only; set-up in docs/OPERATIONS.md#email)
+  account_label: personal
+  allow_bulk_ingest: false    # orders sync runs on request unless this is true
 
 mtg:
-  provider: fixture           # fixture | scryfall | disabled
+  provider: fixture           # fixture | scryfall | disabled  (Scryfall: paced requests, 24 h cache, custom User-Agent)
+  user_agent: NekuDeskCompanion/0.1 (personal, local-first)
 
 tutor:
   enabled: true

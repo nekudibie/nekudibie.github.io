@@ -31,6 +31,12 @@ def main(argv: list[str] | None = None) -> int:
     mig = sub.add_parser("migrate", help="apply pending brain/vault migrations and exit")
     mig.add_argument("--config")
 
+    el = sub.add_parser("email-login", help="one-off Gmail read-only consent (loopback OAuth, tokens stored encrypted)")
+    el.add_argument("--config")
+    el.add_argument("--no-browser", action="store_true")
+    eo = sub.add_parser("email-logout", help="revoke and delete the stored Gmail tokens")
+    eo.add_argument("--config")
+
     args = parser.parse_args(argv)
 
     if args.cmd == "make-token":
@@ -67,6 +73,26 @@ def main(argv: list[str] | None = None) -> int:
 
             svc = VaultService(Database(cfg.vault_db_path))
             print("vault:", svc.migrate() or "up to date", f"({svc.db.schema_version()})")
+        return 0
+
+    if args.cmd in {"email-login", "email-logout"}:
+        if cfg.email.provider != "gmail":
+            print("email.provider is not 'gmail' in the config; set it (and the COMPANION_GMAIL_* variables) first", file=sys.stderr)
+            return 2
+        from companion_integrations.email.gmail import GmailOAuth
+        from companion_integrations.email.oauth_cli import login, logout
+        from companion_integrations.email.tokens import TokenVault
+
+        cid = cfg.secret(cfg.email.client_id_env, required=True)
+        csec = cfg.secret(cfg.email.client_secret_env, required=True)
+        key = cfg.secret(cfg.email.token_key_env, required=True)
+        oauth = GmailOAuth(cid or "", csec or "")
+        vault = TokenVault(cfg.email_token_path, key or "")
+        if args.cmd == "email-login":
+            info = login(oauth, vault, account_label=cfg.email.account_label, open_browser=not args.no_browser)
+            print(f"connected: {info}  (tokens in {cfg.email_token_path}, encrypted)")
+        else:
+            print("revoked" if logout(oauth, vault, account_label=cfg.email.account_label) else "tokens removed (revocation not confirmed)")
         return 0
 
     if args.cmd == "serve":

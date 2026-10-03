@@ -1,0 +1,8 @@
+# Optional TLS for LAN access with Caddy's internal CA (browser microphone capture needs HTTPS).
+# 1. sudo apt install caddy   2. put this file at /etc/caddy/Caddyfile   3. sudo systemctl reload caddy
+# 4. install Caddy's root certificate on the desk Pi/browser: /var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt
+# Replace brain.lan with the brain host's name (add it to /etc/hosts or your router's DNS).
+brain.lan {
+    tls internal
+    reverse_proxy 127.0.0.1:8710
+}

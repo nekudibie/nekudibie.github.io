@@ -1,0 +1,30 @@
+# Brain host. Install with deploy/scripts/install-units.sh (substitutes __REPO__ and __USER__).
+[Unit]
+Description=Companion orchestration API (serves the desk UI)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__REPO__
+EnvironmentFile=__REPO__/.env
+Environment=COMPANION_CONFIG=__REPO__/config/local.yaml
+ExecStart=__REPO__/.venv/bin/companion-api serve
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+# Interactive service: normal priority.
+Nice=0
+# Hardening (the service only needs its repo, data dir and the network).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=__REPO__/data
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

@@ -32,6 +32,17 @@ To use a real model, install [Ollama](https://ollama.com) on the brain host, pul
 reports the `tools` capability, and set `llm.provider: ollama` plus `llm.model` in
 `config/local.yaml`. `GET /readyz` tells you whether the model is reachable and tool-capable.
 
+## What it does today
+
+Chat with citations from your own notes, facts and decisions; home control through Home
+Assistant with an explicit allowlist; camera snapshots/streams; push-to-talk voice with a
+native desk client; consent-gated meeting recording with resumable transcription, summaries
+and draft actions; a Python tutor with verified examples and static exercise checks;
+restart-safe Europe/London reminders; weather (Open-Meteo), exact maths (SymPy), Magic deck
+legality with rule citations, and read-only Gmail search with order tracking. Everything
+external is switchable and labelled; see `docs/STATUS.md` for what has and has not been
+verified on real hardware.
+
 ## Commands
 
 | Command | What it does |

@@ -21,7 +21,7 @@ def test_roles_get_different_tools(client):
     guest = client.get("/v1/me", headers=GUEST).json()
     assert "home_control" in desk["tools"] and "memory_save" in desk["tools"]
     assert "home_control" not in rover["tools"] and "memory_save" not in rover["tools"]
-    assert guest["tools"] == ["clock_now"]
+    assert set(guest["tools"]) == {"clock_now", "weather_forecast", "maths"}  # guests: time, weather, maths only
 
 
 def test_cross_client_conversation_denied(client):
