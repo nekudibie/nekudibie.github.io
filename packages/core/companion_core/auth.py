@@ -126,5 +126,11 @@ class TokenStore:
                 return identity
         return None
 
+    def by_client_id(self, client_id: str) -> ClientIdentity | None:
+        for identity in self._by_hash.values():
+            if identity.client_id == client_id:
+                return identity
+        return None
+
     def __len__(self) -> int:
         return len(self._by_hash)

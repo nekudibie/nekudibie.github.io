@@ -23,6 +23,15 @@ Edit `config/local.yaml` and `.env`, then `uv run companion-api check-config`, t
 Changing a client token means editing `.env` and restarting; the old token stops working
 immediately after restart.
 
+## Home Assistant
+* Create a long-lived access token in HA (Profile → Security) for a dedicated HA user with
+  the least rights you can give it; put it in `.env` as `COMPANION_HA_TOKEN`.
+* `home.allowed_entities` is an explicit list. Nothing outside it is visible or controllable,
+  whatever the model asks. Use `GET /v1/home/discover` with the admin token to see ids.
+* Cameras: the UI fetches `/v1/home/cameras/{id}/snapshot` with its client token, or opens the
+  MJPEG proxy with a 60-second ticket from `POST /v1/home/cameras/{id}/stream-ticket`. HA
+  credentials never reach the browser.
+
 ## Secure access
 * Keep `api.host: 127.0.0.1` unless the desk is another machine. For LAN access either:
   * put the API behind a reverse proxy with TLS (Caddy with an internal CA is the simplest), or

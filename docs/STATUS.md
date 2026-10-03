@@ -11,7 +11,7 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 |---|---|---|
 | 0 | Audit, foundations, decisions | done |
 | 1 | Runnable vertical slice | done, tested locally (66 tests), Ollama connectivity **blocked** (no model host in this container) |
-| 2 | Home (HA adapter, allowlist, scenes, camera contract) | in progress |
+| 2 | Home (HA adapter, allowlist, scenes, camera contract) | done against a fake HA server (tested locally); **not yet run against Neku's real Home Assistant** |
 | 3 | Memory (structured memory, retrieval evaluation, backups) | partly: documents/chunks/FTS/correction/deletion/export done; structured tables, evaluation harness and backup scripts unimplemented |
 | 4 | Voice | unimplemented (research done; see docs/SOURCES.md) |
 | 5 | Meetings | unimplemented |
@@ -56,6 +56,14 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   request ids, migrations, `/healthz`, `/readyz`, `/version`, `check-config`, `make-token`,
   one-command `dev.sh`.
 
+* **Home Assistant adapter.** REST calls match the documented endpoints (`/api/states`,
+  `/api/services/<domain>/<service>`, `/api/camera_proxy[_stream]/<id>`), capabilities are
+  derived from real attributes (`supported_color_modes`, `supported_features`), an explicit
+  entity allowlist is enforced for the UI, the router and the model path, snapshots and MJPEG
+  streams are proxied with server-side credentials and short-lived stream tickets, and an
+  admin-only discovery view lists every entity with its allowed flag.
+  (`tests/integration/test_home_assistant.py`, fake server in `tests/fixtures/`)
+
 ## Simulated (always labelled as fixtures)
 * Language model (`llm.provider: fixture`): pattern-based demo replies that still go through
   the real tool gateway.
@@ -73,13 +81,12 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   mirrors were used (see docs/SOURCES.md). Re-check flagged items on a normal connection.
 
 ## Known gaps / next actions
-1. Milestone 2: Home Assistant REST adapter against a fake server, camera snapshot/stream
-   proxy with short-lived stream tickets, compose file for HA Container.
-2. Milestone 3: structured memory tables (facts/projects/decisions/actions/purchases/lesson
+1. Milestone 3: structured memory tables (facts/projects/decisions/actions/purchases/lesson
    progress), candidate vs confirmed facts, retrieval evaluation harness, backup/restore
    scripts with a restore test.
-3. Token revocation without restart; rate limiting.
-4. Browser-level UI test (Playwright) for the chat flow.
+2. Token revocation without restart; rate limiting.
+3. Browser-level UI test (Playwright) for the chat flow.
+4. HLS/WebRTC camera streams (HA `camera/stream` WebSocket command) when a real camera exists.
 
 ## Questions for Neku (answers unblock specific work; nothing else waits on them)
 1. Email provider: is Gmail the first account to connect (read-only)? If so, are you willing

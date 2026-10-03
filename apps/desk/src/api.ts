@@ -59,6 +59,7 @@ export const api = {
   command: (entity_id: string, action: string, extra: Record<string, unknown> = {}) =>
     req<{ ok: boolean; new_state: string; is_fixture: boolean }>(`/v1/home/entities/${entity_id}/command`, { method: "POST", body: JSON.stringify({ action, ...extra }) }),
   cameras: () => req<CameraView[]>("/v1/home/cameras"),
+  streamTicket: (entity_id: string) => req<{ ticket: string; expires_in_s: number; stream_url: string }>(`/v1/home/cameras/${entity_id}/stream-ticket`, { method: "POST" }),
   snapshotBlob: async (entity_id: string): Promise<{ url: string; fixture: boolean }> => {
     const res = await fetch(`${getBaseUrl()}/v1/home/cameras/${entity_id}/snapshot`, { headers: { Authorization: `Bearer ${getToken()}` } });
     if (!res.ok) throw new ApiError(res.status, "snapshot", "snapshot failed");

@@ -1,21 +1,47 @@
 import { useEffect, useRef, useState } from "react";
-import { api } from "../api";
+import { api, getBaseUrl } from "../api";
 import type { CameraView } from "../types";
 import { ErrorLine, FixtureBadge } from "./Common";
+
+type Mode = "stream" | "snapshot";
 
 export default function CameraPanel({ selected, setSelected }: { selected: string | null; setSelected: (id: string | null) => void }) {
   const [cams, setCams] = useState<CameraView[]>([]);
   const [img, setImg] = useState<string | null>(null);
+  const [streamSrc, setStreamSrc] = useState<string | null>(null);
   const [fixture, setFixture] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updated, setUpdated] = useState<Date | null>(null);
   const [live, setLive] = useState(true);
+  const [mode, setMode] = useState<Mode>("stream");
   const prev = useRef<string | null>(null);
 
   useEffect(() => { api.cameras().then((c) => { setCams(c); if (!selected && c[0]) setSelected(c[0].entity_id); }).catch((e) => setError(e.message)); }, []); // eslint-disable-line
 
+  const cam = cams.find((c) => c.entity_id === selected);
+  const canStream = !!cam && cam.stream_kind === "mjpeg";
+  const effectiveMode: Mode = canStream && mode === "stream" ? "stream" : "snapshot";
+
+  // MJPEG stream through a short-lived ticket (the client token never goes in a URL).
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || !live || effectiveMode !== "stream") { setStreamSrc(null); return; }
+    let stop = false;
+    const issue = async () => {
+      try {
+        const t = await api.streamTicket(selected);
+        if (stop) return;
+        setStreamSrc(`${getBaseUrl()}${t.stream_url}?ticket=${encodeURIComponent(t.ticket)}`);
+        setFixture(false); setError(null); setUpdated(new Date());
+      } catch (e) { if (!stop) { setError((e as Error).message); setMode("snapshot"); } }
+    };
+    issue();
+    const t = setInterval(issue, 50000);
+    return () => { stop = true; clearInterval(t); };
+  }, [selected, live, effectiveMode]);
+
+  // Snapshot polling (fixture cameras and fallback).
+  useEffect(() => {
+    if (!selected || effectiveMode !== "snapshot") return;
     let stop = false;
     const tick = async () => {
       try {
@@ -28,9 +54,8 @@ export default function CameraPanel({ selected, setSelected }: { selected: strin
     tick();
     const t = live ? setInterval(tick, 3000) : undefined;
     return () => { stop = true; if (t) clearInterval(t); };
-  }, [selected, live]);
+  }, [selected, live, effectiveMode]);
 
-  const cam = cams.find((c) => c.entity_id === selected);
   return (
     <div className="card">
       <div className="row" style={{ justifyContent: "space-between" }}>
@@ -39,14 +64,17 @@ export default function CameraPanel({ selected, setSelected }: { selected: strin
       </div>
       <ErrorLine error={error} />
       <div className="camera-frame">
-        {img ? <img src={img} alt={cam?.friendly_name || "camera"} /> : <span className="muted">No image yet</span>}
+        {effectiveMode === "stream" && streamSrc
+          ? <img src={streamSrc} alt={cam?.friendly_name || "camera"} onError={() => { setError("Stream failed; showing snapshots."); setMode("snapshot"); }} />
+          : img ? <img src={img} alt={cam?.friendly_name || "camera"} /> : <span className="muted">No image yet</span>}
         <div className="overlay row">
           <FixtureBadge show={fixture} text="Fixture placeholder · not a live feed" />
-          {!fixture && cam && <span className="badge info">{cam.stream_kind === "none" ? "snapshot refresh every 3 s" : cam.stream_kind}</span>}
+          {!fixture && cam && <span className="badge info">{effectiveMode === "stream" ? "live MJPEG via Home Assistant" : "snapshot refresh every 3 s"}</span>}
         </div>
       </div>
       <div className="row" style={{ marginTop: 8 }}>
-        <button className="small" onClick={() => setLive(!live)}>{live ? "Pause refresh" : "Resume refresh"}</button>
+        <button className="small" onClick={() => setLive(!live)}>{live ? "Pause" : "Resume"}</button>
+        {canStream && <button className="small" onClick={() => setMode(mode === "stream" ? "snapshot" : "stream")}>{mode === "stream" ? "Use snapshots" : "Use stream"}</button>}
         <span className="muted">{updated ? `updated ${updated.toLocaleTimeString("en-GB")}` : ""}</span>
         {cam?.note && <span className="muted">{cam.note}</span>}
       </div>

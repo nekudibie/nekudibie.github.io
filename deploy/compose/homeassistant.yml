@@ -1,0 +1,21 @@
+# Home Assistant Container for the vault/home host.
+# Mirrors the official Container install example (see docs/SOURCES.md): host networking for
+# device discovery, privileged for USB/Bluetooth access, config on local disk.
+# This install type has no add-on manager ("apps"); speech services run separately.
+#
+#   mkdir -p ~/companion-data/homeassistant
+#   HA_CONFIG=~/companion-data/homeassistant docker compose -f homeassistant.yml up -d
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - ${HA_CONFIG:-./ha-config}:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    stop_grace_period: 60s
+    environment:
+      TZ: Europe/London
