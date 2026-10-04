@@ -6,15 +6,23 @@ device; **simulated** = fixture/simulator stands in for a real system and is lab
 such; **blocked** = waiting on something outside the code; **unimplemented** = not started.
 
 ## Verification summary (this session)
-* 181 automated tests pass on Python 3.11, 3.12 and 3.13 (x86_64 development container);
-  `ruff check` and `mypy` clean; desk UI builds with `tsc` + Vite.
+* 185 automated tests pass (Python 3.11, 3.12 and 3.13 verified for the 181-test baseline;
+  the four added on 2026-10-04 ran on 3.12); `ruff check` and `mypy` clean; desk UI builds
+  with `tsc` + Vite.
 * `./deploy/scripts/dev.sh` was run from a clean checkout: it installed the workspace, created
   `.env` and `config/local.yaml`, served the UI at `/`, answered `/v1/me` with the generated
   desk token, reported `/readyz` ready with vault/brain_db ok and every provider labelled
   fixture, and answered "turn on the desk lamp" deterministically with the fixture badge.
-* Nothing has run on Neku's hardware yet; no benchmark figures exist. The git push to GitHub
-  failed with 403 (the Claude GitHub App has no access to this repository), so all commits
-  are local on branch `claude/wonderful-bell-ipz6yj` until access is granted.
+* **First run on Neku's own machine (2026-10-04, Ubuntu on WSL, Node 22):** `dev.sh` built
+  the UI and started the API; the desk token connected; Gmail OAuth consent, encrypted token
+  storage, status and search ran against the real Gmail API; **Sync from email** extracted
+  real orders (Whatnot, Amazon and others). No model host or audio hardware yet, so no
+  latency or benchmark figures exist. The branch is pushed to GitHub.
+* Lessons from the first real inbox (all fixed and tested the same night): a 403 from Gmail
+  turned out to be the Gmail API not being enabled in the Cloud project (the error now quotes
+  Google's reason); merchant names from `*.co.uk` senders came out as "Co"; "Returns &
+  Refunds" footer text marked orders as refunded; and purchases synced earlier from the
+  fixture mailbox sat unlabelled beside real ones (now badged and removable, migration 003).
 
 ## Milestone summary
 
@@ -215,4 +223,8 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 
 ## Still open
 * Govee model numbers (H6xxx on each light), camera brand/model, whether any rescued board
-  POSTs.
+  POSTs. The ordered plan for Neku's next session, including the bench test and the brain
+  decision table, is docs/NEXT_STEPS.md.
+* The order extractor has only been tuned on one real inbox; expect more shop-specific
+  patterns to be needed. Statuses shown for real orders have not been checked against the
+  actual emails by a person yet.
