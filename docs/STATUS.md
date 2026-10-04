@@ -27,7 +27,7 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 | 4 | Voice | software done and tested with fixtures; real STT/TTS adapters import-checked only; **hardware and model validation pending** |
 | 5 | Meetings | done, tested locally with fixture STT (persistent jobs, resumable transcription, consent-gated recording, draft actions with uncertainty) |
 | 6 | Tutor/reminders | done, tested locally (static exercise checks; schedules only on explicit acceptance; DST tests) |
-| 7 | Personal tools | done with fixtures and mock servers; **Gmail, Open-Meteo and Scryfall not yet exercised live** (egress blocked here; Gmail also needs Neku's OAuth client) |
+| 7 | Personal tools | done with fixtures and mock servers; **Gmail live-tested on Neku's machine on 2026-10-04** (consent, status, search); **Open-Meteo and Scryfall not yet exercised live** (egress blocked here) |
 | 8 | Deployment/reliability | assets done and syntax/consistency-tested; **not yet run on a real host** (no systemd/Docker daemon in this container) |
 | 9 | Embodiment foundation | done, simulated and tested (bounded commands, watchdog, link-loss, bumper/cliff, e-stop, role denial) |
 
@@ -185,9 +185,11 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
   supplied.
 * Audio hardware validation (echo, interruption, latency) and real STT/TTS model runs: no
   microphone/speaker here and model downloads are blocked from this container.
-* Email: Gmail adapter is built but connecting it needs Neku's own Google Cloud OAuth
-  client (Desktop type) and consent; see docs/OPERATIONS.md. Live Open-Meteo/Scryfall calls
-  were impossible from this container (egress blocked) and remain to be smoke-tested.
+* Email: Gmail is connected on Neku's Ubuntu/WSL dev machine (2026-10-04): OAuth consent,
+  encrypted token store, status and search ran against the real API. The first attempt gave
+  a 403 because the Gmail API was not enabled in the Cloud project; the adapter now quotes
+  Google's reason. Order sync against Neku's real inbox is still being checked. Live
+  Open-Meteo/Scryfall calls were impossible from this container and remain to be smoke-tested.
 * Several vendor documentation sites were blocked by the container's egress proxy; GitHub
   mirrors were used (see docs/SOURCES.md). Re-check flagged items on a normal connection.
 
@@ -203,10 +205,10 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
 
 ## Answers from Neku (2026-10-03)
 1. GitHub access granted; the branch is pushed.
-2. Email: Gmail, read-only. Neku asked for the OAuth client to be created for them; that
-   needs Neku's own Google account in the Cloud Console (no API or tool can do it on their
-   behalf), so the exact clicks are in docs/OPERATIONS.md#email and the code is ready to
-   accept the client id/secret.
+2. Email: Gmail, read-only. Neku created the Desktop OAuth client themselves (it needs
+   their Google account) and on 2026-10-04 ran `dev.sh` and `email-login` on Ubuntu/WSL;
+   the Tools tab shows "Gmail connected (read-only)". The client secret was pasted into chat
+   during setup, so it should be reset in the Cloud Console and only ever live in `.env`.
 3. Lights: three Govee lights, models not yet read; no Hue Bridge or camera details yet.
 4. Hosts: the old machines were salvaged for parts and may not boot, so there is no confirmed
    brain host. Plan in docs/HARDWARE.md ("Brain").
