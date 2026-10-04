@@ -84,6 +84,33 @@ def _with_expiry(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
+def _explain_403(r: httpx.Response) -> str:
+    """Turn Google's 403 body into a plain-English hint; the raw reason is kept."""
+    reason = ""
+    message = ""
+    try:
+        err = r.json().get("error", {})
+        message = str(err.get("message", ""))[:200]
+        details = err.get("errors") or []
+        if details:
+            reason = str(details[0].get("reason", ""))
+        if not reason:
+            reason = str(err.get("status", ""))
+    except Exception:  # noqa: BLE001 - body may not be JSON
+        message = r.text[:200]
+    if reason == "accessNotConfigured" or "has not been used in project" in message:
+        hint = (
+            "the Gmail API is not enabled in your Google Cloud project: open "
+            "https://console.cloud.google.com/apis/library/gmail.googleapis.com, click Enable, "
+            "wait a minute and try again"
+        )
+    elif "scope" in message.lower():
+        hint = "the saved token lacks gmail.readonly; run `companion-api email-logout` then `email-login` again"
+    else:
+        hint = "check the Gmail API is enabled, the gmail.readonly scope was granted and your account is a test user"
+    return f"Gmail refused the request (403, {reason or 'no reason given'}): {hint}. Google said: {message or 'nothing'}"
+
+
 class GmailProvider:
     name = "gmail"
     is_fixture = False
@@ -130,7 +157,7 @@ class GmailProvider:
                 delay *= 2
                 continue
             if r.status_code == 403:
-                raise UpstreamError("Gmail refused the request (403): check the gmail.readonly scope and that your account is a test user of the OAuth client")
+                raise UpstreamError(_explain_403(r))
             if r.status_code >= 400:
                 raise UpstreamError(f"Gmail API returned {r.status_code}: {r.text[:200]}")
             return r.json()

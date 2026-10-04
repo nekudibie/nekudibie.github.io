@@ -120,5 +120,5 @@ ran, restore the pre-update backup set after rolling the code back.
 | Transcription stuck in queued | worker not running (`systemctl status companion-worker`) or `stt.provider` disabled/fixture; `companion-worker list` |
 | Reminder never fired | `companion-worker` must be running (it ticks the scheduler); check the schedule's `next_run_at` in `GET /v1/schedules` |
 | Voice client: `arecord` not found / wrong device | `sudo apt install alsa-utils`; `arecord -l`; pass `--input-device plughw:X,Y` |
-| Gmail 403 | account is not a test user of the OAuth client, or scope mismatch; re-run `companion-api email-login` |
+| Gmail 403 | the error now quotes Google's reason. `accessNotConfigured` means the Gmail API is not enabled in the Cloud project (enable it at the API Library, then retry); otherwise the account is not a test user, or the token lacks `gmail.readonly` (run `email-logout` then `email-login`) |
 | Disk full on the brain | recordings under `data/brain/media`; delete finished meetings from the Jobs page; `du -sh data/*` |
