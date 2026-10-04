@@ -20,13 +20,24 @@ _REF_PATTERNS = [
     re.compile(r"\b(\d{3}-\d{7}-\d{7})\b"),  # Amazon
     re.compile(r"\border\s*(?:number|no\.?|#|ref(?:erence)?|id)?\s*[:#]?\s*(?=[A-Z0-9-]*\d)([A-Z0-9][A-Z0-9-]{4,24})\b", re.I),  # must contain a digit
 ]
-_STATUS_RULES: list[tuple[Status, re.Pattern[str]]] = [
+# Subject lines are decisive. Body text is only consulted when the subject says nothing, and then
+# only with phrases that describe an event ("has been refunded"), never policy text such as
+# "Returns & Refunds" or "if you need to cancel", which sit in most shop footers.
+_SUBJECT_RULES: list[tuple[Status, re.Pattern[str]]] = [
     ("refunded", re.compile(r"\brefund(?:ed)?\b", re.I)),
     ("cancelled", re.compile(r"\bcancel(?:led|ed)\b", re.I)),
-    ("delivered", re.compile(r"\b(?:was|has been|is) delivered\b|\bdelivered:", re.I)),
-    ("shipped", re.compile(r"\bdispatched\b|\bshipped\b|\bon its way\b|\bhas been sent\b", re.I)),
-    ("confirmed", re.compile(r"\border confirmation\b|\bthanks? for your order\b|\bwe'?ve received your order\b|\byour order\b", re.I)),
+    ("delivered", re.compile(r"\bdelivered\b", re.I)),
+    ("shipped", re.compile(r"\bdispatched\b|\bshipped\b|\bon its way\b|\bhas been sent\b|\bout for delivery\b", re.I)),
+    ("confirmed", re.compile(r"\border confirmation\b|\bthanks? for your order\b|\bwe'?ve received your order\b|\byour\b[^\n]{0,40}?\border\b|\border received\b|\border placed\b", re.I)),
 ]
+_BODY_RULES: list[tuple[Status, re.Pattern[str]]] = [
+    ("refunded", re.compile(r"\b(?:has been|have been|was|were|is being|we'?ve|we have) (?:issued a )?refund(?:ed)?\b|\byour refund (?:of|has|is)\b|\brefund of\s*(?:£|€|\$)", re.I)),
+    ("cancelled", re.compile(r"\b(?:has been|have been|was|were|is now) cancelled\b|\bwe'?ve cancelled your order\b", re.I)),
+    ("delivered", re.compile(r"\b(?:was|has been|is|were) delivered\b|\bdelivered:", re.I)),
+    ("shipped", re.compile(r"\b(?:has|have) been (?:dispatched|shipped|sent)\b|\bis on its way\b|\bout for delivery\b", re.I)),
+    ("confirmed", re.compile(r"\border confirmation\b|\bthanks? for your order\b|\bwe'?ve received your order\b", re.I)),
+]
+_NOT_AN_ORDER_SUBJECT = re.compile(r"\bnewsletter\b|\bunsubscribe\b|\bweekly\b|\bdigest\b", re.I)
 _AMOUNT_RE = re.compile(r"(?:order total|total|grand total|amount)\s*[:\-]?\s*(£|€|\$|GBP|EUR|USD)\s?(\d+(?:[.,]\d{2})?)", re.I)
 _REFUND_AMOUNT_RE = re.compile(r"refund of\s*(£|€|\$)\s?(\d+(?:[.,]\d{2})?)", re.I)
 _ITEM_RE = re.compile(r"^\s*(\d+)\s*[x×]\s*(.+?)\s{2,}(?:£|€|\$)\s?(\d+(?:[.,]\d{2})?)\s*$", re.M)
@@ -53,6 +64,27 @@ def redact_payment(text: str) -> str:
     return _PAYMENT_RE.sub("[payment details redacted]", text)
 
 
+_PUBLIC_SUFFIX_2 = {"co", "org", "ac", "gov", "net", "com", "me", "ltd", "plc"}  # second level under uk/au/nz/… e.g. overclockers.co.uk
+_MAILER_SUBDOMAINS = {"mail", "email", "e", "em", "news", "info", "orders", "order", "notify", "notifications", "shop", "store", "noreply", "no-reply", "service", "updates"}
+_FREEMAIL = {"gmail", "googlemail", "outlook", "hotmail", "live", "yahoo", "icloud", "example", "protonmail", "proton"}
+
+
+def merchant_from_domain(domain: str) -> str | None:
+    """'orders@mail.overclockers.co.uk' -> 'Overclockers'. Returns None for personal mail domains."""
+    labels = [x for x in domain.lower().strip().split(".") if x]
+    if len(labels) < 2:
+        return None
+    labels = labels[:-1]  # drop the TLD
+    if len(labels) >= 2 and labels[-1] in _PUBLIC_SUFFIX_2 and len(labels[-1]) <= 3:
+        labels = labels[:-1]  # drop co/org/ac in co.uk style suffixes
+    while len(labels) > 1 and labels[0] in _MAILER_SUBDOMAINS:
+        labels = labels[1:]
+    root = labels[-1] if labels else ""
+    if not root or root in _FREEMAIL or root in _MAILER_SUBDOMAINS:
+        return None
+    return root.replace("-", " ").title()
+
+
 def merchant_of(msg: EmailMessage) -> str | None:
     sender = msg.sender.lower()
     for key, name in _MERCHANTS.items():
@@ -60,21 +92,24 @@ def merchant_of(msg: EmailMessage) -> str | None:
             return name
     m = re.search(r"@([a-z0-9.-]+)", sender)
     if m:
-        domain = m.group(1)
-        if any(k in domain for k in ("noreply", "no-reply")):
-            return None
-        root = domain.split(".")[-2] if domain.count(".") >= 1 else domain
-        return root.capitalize() if root not in {"gmail", "outlook", "yahoo", "example"} else None
+        return merchant_from_domain(m.group(1))
     return None
 
 
 def extract_order(msg: EmailMessage) -> OrderEvent | None:
     text = f"{msg.subject}\n{msg.body_text}"
     status: Status | None = None
-    for st, pat in _STATUS_RULES:
-        if pat.search(msg.subject) or pat.search(msg.body_text[:600]):
+    if _NOT_AN_ORDER_SUBJECT.search(msg.subject):
+        return None
+    for st, pat in _SUBJECT_RULES:
+        if pat.search(msg.subject):
             status = st
             break
+    if status is None:
+        for st, pat in _BODY_RULES:
+            if pat.search(msg.body_text[:800]):
+                status = st
+                break
     if status is None:
         return None
     merchant = merchant_of(msg)

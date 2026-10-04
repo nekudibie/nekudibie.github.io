@@ -81,3 +81,14 @@ def test_tools_disabled_when_providers_off(cfg, make_client):
     events = sse(client, cid, "What's tomorrow's weather?")
     assert not any(t == "tool_call" and d["name"] == "weather_forecast" for t, d in events)
     assert "FIXTURE forecast" not in text_of(events) and "°C" not in text_of(events)  # no weather claim without a provider
+
+
+def test_fixture_purchases_are_labelled_and_removable(client):
+    synced = client.get("/v1/orders?days=365&sync=true", headers=DESK).json()
+    assert synced["data"]["is_fixture"] is True and "demo mailbox" in synced["data"]["note"]
+    rows = client.get("/v1/orders?days=365", headers=DESK).json()
+    assert rows and all(r["is_fixture"] and r["provider"] == "fixture" for r in rows)
+    assert client.delete("/v1/orders/fixtures", headers=GUEST).status_code == 403
+    gone = client.delete("/v1/orders/fixtures", headers=DESK).json()
+    assert gone["deleted"] == len(rows)
+    assert client.get("/v1/orders?days=365", headers=DESK).json() == []

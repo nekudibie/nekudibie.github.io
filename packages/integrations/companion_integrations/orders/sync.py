@@ -42,7 +42,7 @@ async def sync_orders(email: EmailProvider, vault: Any, *, actor: str, days: int
                 report.extracted += 1
                 _, outcome = await vault.upsert_purchase(
                     PurchaseUpsert(merchant=ev.merchant, order_ref=ev.order_ref, items=ev.items, amount=ev.amount, currency=ev.currency, ordered_at=ev.event_at if ev.status == "confirmed" else None,
-                                   status=ev.status, event_at=ev.event_at, source_message_id=ev.source_message_id),
+                                   status=ev.status, event_at=ev.event_at, source_message_id=ev.source_message_id, provider=email.name, is_fixture=email.is_fixture),
                     actor=actor,
                 )
                 setattr(report, outcome if outcome in {"created", "updated"} else "duplicates", getattr(report, outcome if outcome in {"created", "updated"} else "duplicates") + 1)

@@ -91,6 +91,9 @@ class _StructuredLocal:
     async def list_purchases(self, *, scopes: Iterable[str], merchant: str | None = None, since: str | None = None) -> list[Purchase]:
         return await asyncio.to_thread(self._s().list_purchases, scopes=list(scopes), merchant=merchant, since=since)
 
+    async def delete_fixture_purchases(self, *, actor: str, scopes: Iterable[str]) -> int:
+        return await asyncio.to_thread(self._s().delete_fixture_purchases, actor=actor, scopes=list(scopes))
+
     async def record_attempt(self, course_id: str, lesson_id: str, *, exercise_id: str, passed: bool, score: float | None, topics: list[str], actor: str) -> LessonProgress:
         return await asyncio.to_thread(self._s().record_attempt, course_id, lesson_id, exercise_id=exercise_id, passed=passed, score=score, topics=topics, actor=actor)
 
@@ -166,6 +169,10 @@ class _StructuredHttp:
     async def list_purchases(self, *, scopes: Iterable[str], merchant: str | None = None, since: str | None = None) -> list[Purchase]:
         params = {k: v for k, v in {"merchant": merchant, "since": since}.items() if v}
         return [Purchase.model_validate(x) for x in await self._req("GET", "/v1/vault/purchases", scopes=scopes, params=params)]
+
+    async def delete_fixture_purchases(self, *, actor: str, scopes: Iterable[str]) -> int:
+        data = await self._req("DELETE", "/v1/vault/purchases/fixtures", actor=actor, scopes=scopes)
+        return int(data["deleted"])
 
     async def record_attempt(self, course_id: str, lesson_id: str, *, exercise_id: str, passed: bool, score: float | None, topics: list[str], actor: str) -> LessonProgress:
         return LessonProgress.model_validate(await self._req("POST", f"/v1/vault/lessons/{course_id}/{lesson_id}/attempts", actor=actor, json={"exercise_id": exercise_id, "passed": passed, "score": score, "topics": topics}))

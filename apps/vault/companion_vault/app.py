@@ -286,6 +286,10 @@ def create_app(cfg: AppConfig, service: VaultService | None = None) -> FastAPI:
     async def list_purchases(actor: ActorDep, request: Request, merchant: str | None = None, since: str | None = None):
         return sm(request).list_purchases(scopes=actor.scopes, merchant=merchant, since=since)
 
+    @app.delete("/v1/vault/purchases/fixtures")
+    async def delete_fixture_purchases(actor: ActorDep, request: Request):
+        return {"deleted": sm(request).delete_fixture_purchases(actor=actor.client_id, scopes=actor.scopes)}
+
     @app.post("/v1/vault/lessons/{course_id}/{lesson_id}/attempts")
     async def record_attempt(course_id: str, lesson_id: str, body: _Attempt, actor: ActorDep, request: Request):
         return sm(request).record_attempt(course_id, lesson_id, exercise_id=body.exercise_id, passed=body.passed, score=body.score, topics=body.topics, actor=actor.client_id)

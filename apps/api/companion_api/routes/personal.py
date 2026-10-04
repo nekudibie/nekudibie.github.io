@@ -148,3 +148,11 @@ async def orders(identity: Annotated[ClientIdentity, Depends(require(Permission.
 
     since = (st.clock.now() - dt.timedelta(days=days)).isoformat()
     return [p.model_dump() for p in await st.vault.list_purchases(scopes=identity.memory_scopes, merchant=merchant, since=since)]
+
+
+@router.delete("/orders/fixtures")
+async def delete_fixture_orders(identity: Annotated[ClientIdentity, Depends(require(Permission.MEMORY_WRITE))], request: Request):
+    """Remove purchases that came only from the fixture (demo) mailbox. Live purchases stay."""
+    st = request.app.state.companion
+    deleted = await st.vault.delete_fixture_purchases(actor=identity.client_id, scopes=identity.memory_scopes)
+    return {"deleted": deleted, "note": "only fixture-sourced purchases were removed"}

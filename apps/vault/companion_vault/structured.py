@@ -153,6 +153,8 @@ class Purchase(BaseModel):
     scope: str
     source_message_ids: list[str]
     source_document_id: str | None = None
+    provider: str = ""
+    is_fixture: bool = False
     created_at: str
     updated_at: str
 
@@ -169,6 +171,8 @@ class PurchaseUpsert(BaseModel):
     event_at: str | None = None
     source_message_id: str | None = None
     source_document_id: str | None = None
+    provider: str = Field(default="", max_length=40)
+    is_fixture: bool = False
     scope: str = "owner"
 
 
@@ -551,6 +555,7 @@ class StructuredMemory:
             amount=row["amount"], currency=row["currency"], ordered_at=row["ordered_at"], status=row["status"],
             status_history=json.loads(row["status_history_json"]), scope=row["scope"],
             source_message_ids=json.loads(row["source_message_ids"]), source_document_id=row["source_document_id"],
+            provider=row["provider"], is_fixture=bool(row["is_fixture"]),
             created_at=row["created_at"], updated_at=row["updated_at"],
         )
 
@@ -565,10 +570,11 @@ class StructuredMemory:
                 pid = new_id("pur")
                 conn.execute(
                     """INSERT INTO purchases(id, merchant, merchant_key, order_ref, items_json, amount, currency, ordered_at, status,
-                           status_history_json, scope, source_message_ids, source_document_id, created_at, updated_at)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                           status_history_json, scope, source_message_ids, source_document_id, provider, is_fixture, created_at, updated_at)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (pid, p.merchant.strip(), mkey, p.order_ref.strip(), json.dumps(p.items), p.amount, p.currency, p.ordered_at, p.status,
-                     json.dumps([event]), p.scope, json.dumps([p.source_message_id] if p.source_message_id else []), p.source_document_id, now, now),
+                     json.dumps([event]), p.scope, json.dumps([p.source_message_id] if p.source_message_id else []), p.source_document_id,
+                     p.provider, int(p.is_fixture), now, now),
                 )
                 self._audit(conn, actor, "purchase.create", pid, merchant=p.merchant, status=p.status)
                 outcome = "created"
@@ -583,10 +589,13 @@ class StructuredMemory:
                 items = json.loads(row["items_json"]) or p.items
                 if p.source_message_id:
                     srcs.append(p.source_message_id)
+                # Live evidence outranks fixture evidence; a row only counts as fixture while all of it is.
+                still_fixture = bool(row["is_fixture"]) and p.is_fixture
                 conn.execute(
                     "UPDATE purchases SET status = ?, status_history_json = ?, items_json = ?, amount = COALESCE(?, amount), currency = COALESCE(?, currency),"
-                    " ordered_at = COALESCE(ordered_at, ?), source_message_ids = ?, updated_at = ? WHERE id = ?",
-                    (new_status, json.dumps(history), json.dumps(items), p.amount, p.currency, p.ordered_at, json.dumps(srcs), now, row["id"]),
+                    " ordered_at = COALESCE(ordered_at, ?), source_message_ids = ?, provider = ?, is_fixture = ?, updated_at = ? WHERE id = ?",
+                    (new_status, json.dumps(history), json.dumps(items), p.amount, p.currency, p.ordered_at, json.dumps(srcs),
+                     p.provider or row["provider"], int(still_fixture), now, row["id"]),
                 )
                 self._audit(conn, actor, "purchase.update", row["id"], from_status=current, to_status=new_status)
                 pid = row["id"]
@@ -610,6 +619,18 @@ class StructuredMemory:
         sql += " ORDER BY COALESCE(ordered_at, created_at) DESC LIMIT ?"
         params.append(limit)
         return [self._purchase(r) for r in self.db.query(sql, tuple(params))]
+
+    def delete_fixture_purchases(self, *, actor: str, scopes: Iterable[str]) -> int:
+        """Remove purchases whose only evidence is the fixture mailbox. Live purchases are never touched."""
+        scopes = list(scopes)
+        if not scopes:
+            return 0
+        with self.db.transaction() as conn:
+            rows = conn.execute(f"SELECT id, merchant, order_ref FROM purchases WHERE is_fixture = 1 AND scope IN ({','.join('?' * len(scopes))})", tuple(scopes)).fetchall()  # noqa: S608
+            for r in rows:
+                conn.execute("DELETE FROM purchases WHERE id = ?", (r["id"],))
+                self._audit(conn, actor, "purchase.delete_fixture", r["id"], merchant=r["merchant"], order_ref=r["order_ref"])
+        return len(rows)
 
     # ------------------------------------------------------- lesson progress
     def _progress(self, row: sqlite3.Row) -> LessonProgress:

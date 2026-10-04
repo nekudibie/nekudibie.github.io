@@ -33,7 +33,7 @@ def test_backup_restore_from_separate_target(tmp_path: Path):
     dest = tmp_path / "elsewhere" / "backups"  # a separate target directory
     out = make_backup([BackupTarget("vault", live, files)], dest, keep=14)
     manifest = verify_backup(out)
-    assert manifest["entries"][0]["schema"] == "002_structured_memory.sql" and manifest["entries"][0]["files_count"] == 1
+    assert manifest["entries"][0]["schema"] == "003_purchase_provenance.sql" and manifest["entries"][0]["files_count"] == 1
 
     # damage the live database and the files directory, then restore
     svc.db.close()

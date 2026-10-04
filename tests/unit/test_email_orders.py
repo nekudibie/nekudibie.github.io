@@ -130,3 +130,28 @@ async def test_sync_orders_dedupes_and_tracks_status(tmp_path):
     rep2 = await sync_orders(fx, vault, actor="worker", days=365)
     assert rep2.created == 0 and rep2.updated == 0 and rep2.duplicates == rep.extracted
     assert json.dumps(purchases["203-5567890-1234567"].items)  # serialisable
+
+
+def test_merchant_from_domain_handles_uk_suffixes_and_mailer_subdomains():
+    from companion_integrations.orders.extract import merchant_from_domain
+
+    assert merchant_from_domain("mail.overclockers.co.uk") == "Overclockers"
+    assert merchant_from_domain("orders.email.whatnot.com") == "Whatnot"
+    assert merchant_from_domain("scan.co.uk") == "Scan"
+    assert merchant_from_domain("gmail.com") is None and merchant_from_domain("mail.co.uk") is None
+
+
+def test_status_detection_ignores_footer_policy_text_and_newsletters():
+    from companion_integrations.email.base import EmailMessage
+
+    def msg(subject: str, body: str, sender: str = "Acme Parts <orders@mail.acmeparts.co.uk>") -> EmailMessage:
+        return EmailMessage(id="m1", thread_id="t", subject=subject, sender=sender, to="n@example.com", date="2026-10-01T10:00:00Z", snippet="", body_text=body)
+
+    footer = "Order number: AB12345\nQuestions? See Returns & Refunds. If you need to cancel, visit your account.\nOrder total: £12.00"
+    ev = extract_order(msg("Your order has been dispatched", footer))
+    assert ev is not None and ev.status == "shipped" and ev.merchant == "Acmeparts"
+    ev2 = extract_order(msg("Thanks for your order", footer))
+    assert ev2 is not None and ev2.status == "confirmed"
+    assert extract_order(msg("Weekly newsletter", "Mark ordered a market app. order 12345 refund")) is None
+    ev3 = extract_order(msg("An update on your purchase", "Your order AB12345 has been refunded. Refund of £12.00 is on its way."))
+    assert ev3 is not None and ev3.status == "refunded" and ev3.amount == 12.00

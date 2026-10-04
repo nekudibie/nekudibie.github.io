@@ -69,6 +69,7 @@ export const api = {
   emailStatus: () => req<{ enabled: boolean; provider?: string | null; is_fixture?: boolean; account?: string; read_only?: boolean; health?: { status: string; detail: string } }>("/v1/email/status"),
   emailSearch: (query: string) => req<{ messages: { id: string; subject: string; sender: string; date?: string | null; snippet: string; link?: string | null }[]; is_fixture: boolean }>("/v1/email/search", { method: "POST", body: JSON.stringify({ query, limit: 10 }) }),
   orders: (sync: boolean) => req<unknown>(`/v1/orders?days=365&sync=${sync}`),
+  deleteFixtureOrders: () => req<{ deleted: number; note: string }>("/v1/orders/fixtures", { method: "DELETE" }),
   robotStatus: () => req<{ mode: string; state: string; reason: string; pose: { x_m: number; y_m: number; theta_deg: number }; sensors: { battery_pct: number; link_ok: boolean; bumper_front: boolean; cliff_front: boolean }; estop_latched: boolean; note: string; limits: { max_linear_mps: number; max_angular_rps: number; watchdog_timeout_s: number } }>("/v1/robot/status"),
   robotAction: (action: "stop" | "estop" | "reset") => req<unknown>(`/v1/robot/${action}`, { method: "POST" }),
   robotLook: (dir: string) => req<unknown>("/v1/robot/command", { method: "POST", body: JSON.stringify({ kind: "look", look: dir }) }),

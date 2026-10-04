@@ -423,11 +423,14 @@ async def orders_search(ctx: ToolContext, args: OrdersSearchArgs) -> ToolResult:
     since = (ctx.state.clock.now() - __import__("datetime").timedelta(days=args.days)).isoformat()
     purchases = await ctx.state.vault.list_purchases(scopes=ctx.identity.memory_scopes, merchant=args.merchant, since=since)
     rows = [{"merchant": p.merchant, "order_ref": p.order_ref, "status": p.status, "amount": p.amount, "currency": p.currency, "items": [i.get("name") for i in p.items], "ordered_at": p.ordered_at,
-             "last_update": p.updated_at, "evidence_messages": len(p.source_message_ids)} for p in purchases]
+             "last_update": p.updated_at, "evidence_messages": len(p.source_message_ids), "is_fixture": p.is_fixture, "provider": p.provider} for p in purchases]
     note = "A confirmation or dispatch is not proof of delivery; 'delivered' appears only when a delivery notice was found."
-    payload = {"merchant": args.merchant, "days": args.days, "count": len(rows), "purchases": rows, "sync": report.__dict__ if report else None, "note": note, "is_fixture": bool(prov and prov.is_fixture)}
+    any_fixture = bool(prov and prov.is_fixture) or any(p.is_fixture for p in purchases)
+    if any(p.is_fixture for p in purchases):
+        note += " Purchases marked is_fixture came from the demo mailbox and are not real orders."
+    payload = {"merchant": args.merchant, "days": args.days, "count": len(rows), "purchases": rows, "sync": report.__dict__ if report else None, "note": note, "is_fixture": any_fixture}
     return ToolResult(content=json.dumps(payload, default=str), summary=f"{len(rows)} purchase(s)" + (f" from {args.merchant}" if args.merchant else "") + (" (fixture mailbox)" if prov and prov.is_fixture else ""),
-                      provider=prov.name if prov else "vault", is_fixture=bool(prov and prov.is_fixture), data={"count": len(rows)})
+                      provider=prov.name if prov else "vault", is_fixture=any_fixture, data={"count": len(rows)})
 
 
 # -- embodiment (simulation) ---------------------------------------------------------------
