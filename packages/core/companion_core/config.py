@@ -167,7 +167,9 @@ class EmailConfig(_Strict):
     token_key_env: str = "COMPANION_TOKEN_KEY"  # noqa: S105 - env var name, not a secret
     token_path: Path | None = None
     max_results: int = 25
-    allow_bulk_ingest: bool = False
+    allow_bulk_ingest: bool = False  # when true the embedded worker syncs orders in the background
+    orders_sync_interval_min: int = Field(default=60, ge=5, le=1440)
+    orders_sync_days: int = Field(default=30, ge=1, le=365)
 
 
 class MtgConfig(_Strict):

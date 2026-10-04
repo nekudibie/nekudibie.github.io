@@ -92,3 +92,17 @@ def test_fixture_purchases_are_labelled_and_removable(client):
     gone = client.delete("/v1/orders/fixtures", headers=DESK).json()
     assert gone["deleted"] == len(rows)
     assert client.get("/v1/orders?days=365", headers=DESK).json() == []
+
+
+def test_background_orders_sync_is_flag_gated_and_rate_limited(client):
+    st = client.app.state.companion
+    st.orders_tick()  # allow_bulk_ingest is false in the example config: nothing happens
+    assert st.orders_sync_runs == 0 and client.get("/v1/orders?days=365", headers=DESK).json() == []
+    st.config.email.allow_bulk_ingest = True
+    st.orders_tick()
+    assert st.orders_sync_runs == 1
+    rows = client.get("/v1/orders?days=365", headers=DESK).json()
+    assert rows and all(r["is_fixture"] for r in rows)
+    st.orders_tick()  # within the interval: no second run
+    assert st.orders_sync_runs == 1
+    st.config.email.allow_bulk_ingest = False

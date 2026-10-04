@@ -94,8 +94,11 @@ immediately after restart.
    allows sending, deleting or labelling.
 5. To disconnect: `uv run companion-api email-logout` (revokes at Google and deletes the file),
    and/or remove the app at https://myaccount.google.com/permissions.
-Order sync only runs when you ask ("what did I buy…", the Tools page button); bulk ingestion
-is off unless `email.allow_bulk_ingest` is turned on.
+Order sync runs when you ask ("what did I buy…", the Tools page button). With
+`email.allow_bulk_ingest: true` the embedded worker also runs it in the background every
+`orders_sync_interval_min` minutes over the last `orders_sync_days` days (read-only; it only
+ever searches and reads). Purchases that came from the fixture mailbox are badged "demo
+mailbox" and can be removed from the Tools page once a real mailbox is connected.
 
 ## Weather, maths and card data
 * Weather: set `weather.provider: open_meteo`, `latitude`, `longitude`, `location_name`. The

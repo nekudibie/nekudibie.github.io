@@ -72,7 +72,9 @@ weather:
 email:
   provider: fixture           # fixture | gmail | disabled  (read-only scope only; set-up in docs/OPERATIONS.md#email)
   account_label: personal
-  allow_bulk_ingest: false    # orders sync runs on request unless this is true
+  allow_bulk_ingest: false    # true: the embedded worker also syncs orders in the background
+  orders_sync_interval_min: 60
+  orders_sync_days: 30
 
 mtg:
   provider: fixture           # fixture | scryfall | disabled  (Scryfall: paced requests, 24 h cache, custom User-Agent)

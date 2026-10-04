@@ -67,6 +67,27 @@ class AppState:
     def uptime_s(self) -> int:
         return int(time.time() - self.started_at)
 
+    _orders_wall: float | None = None
+    orders_sync_runs: int = 0
+
+    def orders_tick(self) -> None:
+        """Background order sync (embedded worker). Runs only when email.allow_bulk_ingest is true,
+        at most once per orders_sync_interval_min, and never on the request path. Read-only on email."""
+        cfg = self.config.email
+        if self.email is None or not cfg.allow_bulk_ingest:
+            return
+        now = time.monotonic()
+        if self._orders_wall is not None and now - self._orders_wall < cfg.orders_sync_interval_min * 60:
+            return
+        self._orders_wall = now
+        import asyncio
+
+        from companion_integrations.orders.sync import sync_orders
+
+        report = asyncio.run(sync_orders(self.email, self.vault, actor="worker:orders_sync", days=cfg.orders_sync_days))
+        self.orders_sync_runs += 1
+        log.info("orders sync", extra={"searched": report.searched, "extracted": report.extracted, "created": report.created, "updated": report.updated, "fixture": self.email.is_fixture})
+
     def robot_tick(self) -> None:
         """Advance the simulator by the wall-clock time elapsed since the last tick (watchdog enforcement)."""
         if self.robot is None:
@@ -144,5 +165,5 @@ def build_worker(state: AppState) -> Any:
 
     services = WorkerServices(config=state.config, vault=state.vault, stt=state.stt, llm=state.llm, recordings=state.recordings, queue=state.queue, clock=state.clock, scheduler=state.scheduler)
     cfg = state.config.worker
-    periodic = [state.scheduler.tick] + ([state.robot_tick] if state.robot is not None else [])
+    periodic = [state.scheduler.tick, state.orders_tick] + ([state.robot_tick] if state.robot is not None else [])
     return Worker(state.queue, HANDLERS, services, concurrency=cfg.concurrency, poll_interval_s=cfg.poll_interval_s, lease_s=cfg.lease_s, periodic=periodic)
