@@ -1,5 +1,7 @@
 # Hardware
 
+The step-by-step identification and bench-test plan is in docs/NEXT_STEPS.md.
+
 Status words used here: **confirmed** (Neku has it and it is identified), **unknown**
 (exists but model/condition unidentified), **candidate** (reasonable option, not bought),
 **excluded** (must not be used).

@@ -20,6 +20,13 @@ it and open the sources drawer.
 
 Tests: `uv run pytest -q` → all pass; `uv run ruff check .` → clean.
 
+**Windows with WSL (Ubuntu):** this is where Neku runs Stage 0 (verified 2026-10-04). Node
+comes from `sudo apt update && sudo apt install -y nodejs npm`. The browser on Windows reaches
+http://127.0.0.1:8710 directly. Install Ollama *inside* WSL (`curl -fsSL https://ollama.com/install.sh | sh`)
+so the API can reach it at 127.0.0.1:11434; a Windows-side Ollama is reachable from WSL only
+by the Windows host's IP, which changes. The `email-login` browser step works from WSL: if no
+browser opens, copy the printed link into the Windows browser.
+
 ## Stage 1: attach a real model (brain on the same machine or a LAN host)
 
 1. Install Ollama on the brain host (https://ollama.com/download, Linux script). Confirm with

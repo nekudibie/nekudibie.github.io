@@ -60,6 +60,7 @@ verified on real hardware.
 
 ## Where things are
 
+* `docs/NEXT_STEPS.md` the current step-by-step plan for Neku (software, identification, bench test, decisions).
 * `docs/STATUS.md` what works, how it was verified, what is simulated, what is blocked.
 * `docs/ARCHITECTURE.md` roles, request flow, trust boundaries, data ownership.
 * `docs/BUILD_GUIDE.md` assembly and deployment stage by stage, with checkpoints.
