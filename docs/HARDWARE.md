@@ -18,10 +18,11 @@ Status words used here: **confirmed** (Neku has it and it is identified), **unkn
 | Laptop (ordered, £10) | confirmed, not yet arrived | Intel i5-7200U, 4 GB RAM, 128 GB SSD, 14", working battery | Candidate always-on vault + Home Assistant host, and a small-model brain once the 8 GB DDR4 SO-DIMM is fitted (8 or 12 GB total depending on slots). Battery doubles as a UPS. |
 | Laptop webcam module | confirmed, excluded | strip marked CUPAI13FF23000BC206759R2 | Internal ribbon-cable camera; not a usable camera for this project. |
 | SD card reader board | confirmed, excluded | DAG34ATH6D0 "Intel G34A" | Laptop daughterboard; no use. |
-| Smart lights | partly | Govee Smart LED Bulb **H6006**, B22, 1000 lm, 2700–6500 K (one photographed; three owned, assumed same model until confirmed) | Local control depends on whether the Govee Home app shows a **LAN Control** switch for this model; unverified. Otherwise Govee cloud API via Home Assistant. |
-| Motherboards | **unknown** | ? | The one open question that decides the brain: is there an AM4 board? |
+| Smart lights | partly | Govee Smart LED Bulb **H6006**, B22, 1000 lm, 2700–6500 K (one photographed; three owned, assumed same model until confirmed) | Neku reports the Govee Home app shows **LAN Control** (switched on) and all three are the same model, so Home Assistant's local Govee integration should apply; to be confirmed when HA runs. Otherwise Govee cloud API via Home Assistant. |
+| Motherboard | confirmed exists, model unknown | AM4 (Neku confirms) | Model decides whether the 5600G needs a BIOS update first (B450/X470/A320 do; B550/A520 usually do not). Needs **long** DDR4 DIMMs, none seen yet, plus a cooler and PSU. |
 | HDDs/SSDs, PSU, spare screen | unknown | ? | Not yet photographed. |
 | Camera | unknown | ? | Not yet identified. |
+| Raspberry Pi (doorbell) | in use, excluded | model not recorded | Runs Neku's doorbell; leave it alone. |
 | Found USB stick | **excluded** | — | Firmware cannot be verified. Keep out of every host on the network. |
 | Laptop battery cells | **excluded** | — | Do not build a pack from unidentified cells. |
 
