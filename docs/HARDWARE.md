@@ -52,8 +52,9 @@ on any board that boots; paste the output into this file.
 * 2026-10-04 decision: a Ryzen 5 5600G and an AM4 board exist, but Neku has no desktop DDR4
   and has chosen not to buy any, so that pair is shelved. **Brain = Neku's Windows PC (Ollama in
   WSL) while it is on; the £10 i5-7200U laptop (with the 8 GB DDR4 SO-DIMM fitted) is the
-  always-on vault/Home Assistant host and a slow small-model fallback.** The PC's CPU, RAM and
-  GPU are not yet recorded; a GPU with ≥6 GB would make it a strong brain at no cost.
+  always-on vault/Home Assistant host and a slow small-model fallback.** The PC has an **AMD RX 7600 XT
+  (16 GB VRAM)**, enough for 7–14B models at speed; Ollama runs on Windows (AMD cards do not
+  pass through to WSL) and the API reaches it over the WSL network. CPU/RAM still unrecorded.
 * Earlier note: the old machines were already stripped for parts and may not boot, so there
   was **no confirmed brain host**. Options, in order of least spend: (a) try one
   board + CPU + matching RAM + a spare PSU on the bench first (needs a monitor, keyboard and

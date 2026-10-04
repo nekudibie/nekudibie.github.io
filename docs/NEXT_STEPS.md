@@ -39,31 +39,28 @@ email**. Done when only real shops are listed and none shows merchant "Co".
 Paste back: a screenshot of the Purchases list. If an order shows the wrong status or a
 missing shop name, tell me the shop; I will add a pattern for its emails.
 
-### A3. Give it a real model (10 min, software ready, your PC's RAM decides the size)
-The chat currently answers from a labelled demo model. Ollama runs inside WSL:
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull qwen2.5:3b
-ollama show qwen2.5:3b | grep -i -A3 capabilities
-```
-Done when the capabilities list includes `tools`. If it does not, tell me the output.
+### A3. Give it a real model: Ollama on Windows, using the RX 7600 XT (15 min)
+Neku's PC has an AMD RX 7600 XT (16 GB VRAM). WSL cannot pass an AMD card through, so Ollama
+runs **on Windows** and the companion in WSL talks to it over the local network.
 
-Then:
-```bash
-nano config/local.yaml
-```
-Under `llm:` set `provider: ollama` and `model: qwen2.5:3b`. Save. Restart with
-`./deploy/scripts/dev.sh`. In the browser the health line should say the model is live and
-the fixture badge disappears from chat replies.
-
-Measure, do not guess:
-```bash
-ollama run qwen2.5:3b --verbose "Say hello in one sentence."
-```
-Paste back the `eval rate` line. Under about 8 tokens/s the replies will feel slow; that is
-the number that decides whether your PC can be the brain for now.
-
-If `ollama pull` says the model is too big for your RAM, use `qwen2.5:1.5b` and tell me.
+1. Install Ollama for Windows (https://ollama.com/download). In a Windows terminal:
+   ```
+   ollama pull qwen2.5:7b
+   ollama run qwen2.5:7b --verbose "Say hello in one sentence."
+   ollama ps
+   ```
+   Done when `ollama ps` shows **100% GPU**. Record the `eval rate` in docs/STATUS.md.
+   (Whether the 7600 XT is on Ollama's Windows support list could not be verified from the
+   build container; `ollama ps` is the ground truth.)
+2. Make Ollama listen for WSL: Windows user environment variable `OLLAMA_HOST=0.0.0.0`,
+   then quit Ollama from the tray and start it again. If WSL still cannot connect, allow
+   Ollama through Windows Defender Firewall for Private networks.
+3. In WSL: `WINIP=$(ip route show default | awk '{print $3}'); curl http://$WINIP:11434/api/version`.
+4. `config/local.yaml` → `llm.provider: ollama`, `llm.model: qwen2.5:7b`,
+   `llm.base_url: http://<WINIP>:11434`. Restart with `./deploy/scripts/dev.sh`.
+   The WINIP can change after a Windows reboot; on Windows 11, WSL "mirrored" networking
+   (`.wslconfig`: `networkingMode=mirrored`) makes `http://127.0.0.1:11434` work instead.
+5. Later: `qwen2.5:14b` fits in 16 GB and is noticeably stronger; measure before switching.
 
 ---
 
@@ -143,7 +140,7 @@ so that pair is shelved. Decision:
 
 | Role | Host | Notes |
 |---|---|---|
-| Brain while at the desk | Neku's Windows PC, Ollama inside WSL (Block A3) | Measure `eval rate` and record it. Record the PC's CPU/RAM/GPU from `dxdiag`. |
+| Brain while at the desk | Neku's Windows PC: Ollama **on Windows** using the RX 7600 XT (16 GB VRAM), reached from WSL (Block A3) | Measure `eval rate` and record it. CPU and RAM still to be recorded. |
 | Always-on vault + Home Assistant | the £10 i5-7200U laptop with the 8 GB DDR4 SO-DIMM fitted | Battery doubles as a UPS. Also a slow small-model fallback when the PC is off. |
 | Shelved | AM4 board + 5600G | Becomes a fast brain only if desktop DDR4 and a PSU are ever added. Not assumed. |
 
