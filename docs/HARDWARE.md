@@ -6,18 +6,23 @@ Status words used here: **confirmed** (Neku has it and it is identified), **unkn
 (exists but model/condition unidentified), **candidate** (reasonable option, not bought),
 **excluded** (must not be used).
 
-## Inventory template (fill in as items are identified)
+## Inventory (identified from Neku's photos, 2026-10-04)
 
-| Item | Status | Model / markings | Notes to capture |
+| Item | Status | Model / markings | Notes |
 |---|---|---|---|
-| Spare screen | unknown | ? | Panel size, native resolution, connector on the panel (eDP/LVDS/HDMI), whether it already has a controller board, touch (USB? which chipset?) |
-| Old laptop/desktop CPUs | unknown (loose parts; no known-booting machine) | ? | Exact model string from the heat spreader; socket; TDP. Neku: parts were salvaged, boards may not boot |
-| RAM | unknown | ? | DIMM vs SO-DIMM, DDR generation, capacity, speed |
-| Motherboards | unknown | ? | Model, socket, POST status, which RAM generation, SATA/M.2 ports, onboard video |
-| HDDs | unknown | ? | Capacity, interface, SMART health (`smartctl -a`), hours |
-| Smart lights | partly | 3 x Govee lights (models unknown); Hue and Smart Life/Tuya mentioned earlier | Govee model numbers (sticker on the controller/plug) decide whether local LAN control is possible |
-| Camera | unknown | ? | Brand/model, RTSP/ONVIF support, whether cloud-only |
-| Found USB stick | **excluded** | — | Scanned and formatted, but firmware cannot be verified. Keep out of every host on the network. |
+| CPU | confirmed | AMD Ryzen 5 5600G (AM4, 6c/12t, integrated graphics) | Strongest part owned. Needs an AM4 motherboard, DDR4 **desktop** DIMMs, a PSU and a cooler. **No AM4 board seen yet.** |
+| CPU | confirmed, excluded | Intel Core i3-380M (2010 mobile, socket G1) | Too old and slow; no use here. |
+| RAM | confirmed | Samsung 8 GB DDR4 SO-DIMM PC4-2400T (M471A1K43CB1-CRC) | Laptop memory. Fits the incoming i5-7200U laptop; does **not** fit a desktop AM4 board. |
+| RAM | confirmed, excluded | Samsung 4 GB DDR3 DIMM PC3-12800U (M378B5273CH0-CK0) | DDR3 desktop; incompatible with Ryzen. |
+| RAM | confirmed, excluded | Samsung 4 GB DDR3 SO-DIMM PC3-10600S (M471B5273CH0-CH9) | DDR3 laptop; too old for either host. |
+| Laptop (ordered, £10) | confirmed, not yet arrived | Intel i5-7200U, 4 GB RAM, 128 GB SSD, 14", working battery | Candidate always-on vault + Home Assistant host, and a small-model brain once the 8 GB DDR4 SO-DIMM is fitted (8 or 12 GB total depending on slots). Battery doubles as a UPS. |
+| Laptop webcam module | confirmed, excluded | strip marked CUPAI13FF23000BC206759R2 | Internal ribbon-cable camera; not a usable camera for this project. |
+| SD card reader board | confirmed, excluded | DAG34ATH6D0 "Intel G34A" | Laptop daughterboard; no use. |
+| Smart lights | partly | Govee Smart LED Bulb **H6006**, B22, 1000 lm, 2700–6500 K (one photographed; three owned, assumed same model until confirmed) | Local control depends on whether the Govee Home app shows a **LAN Control** switch for this model; unverified. Otherwise Govee cloud API via Home Assistant. |
+| Motherboards | **unknown** | ? | The one open question that decides the brain: is there an AM4 board? |
+| HDDs/SSDs, PSU, spare screen | unknown | ? | Not yet photographed. |
+| Camera | unknown | ? | Not yet identified. |
+| Found USB stick | **excluded** | — | Firmware cannot be verified. Keep out of every host on the network. |
 | Laptop battery cells | **excluded** | — | Do not build a pack from unidentified cells. |
 
 Take photos of labels and run `sudo dmidecode -t processor,memory` and `lsblk -o NAME,SIZE,MODEL`
@@ -43,8 +48,12 @@ on any board that boots; paste the output into this file.
   Raspberry Pi OS Lite + a minimal Wayland kiosk is an option later.
 
 ### Brain (model host)
-* Neku's update: the old machines were already stripped for parts and may not boot, so there
-  is currently **no confirmed brain host**. Options, in order of least spend: (a) try one
+* 2026-10-04: a **Ryzen 5 5600G** was found in the salvage. With an AM4 board, 16 GB of DDR4
+  desktop memory and a PSU it would be a strong brain for 7–8B models. No board has been seen,
+  so the brain is still unconfirmed. The £10 i5-7200U laptop (with the 8 GB DDR4 SO-DIMM
+  fitted) is the interim brain for 3B-class models and the always-on vault host.
+* Earlier note: the old machines were already stripped for parts and may not boot, so there
+  was **no confirmed brain host**. Options, in order of least spend: (a) try one
   board + CPU + matching RAM + a spare PSU on the bench first (needs a monitor, keyboard and
   a USB stick with Ubuntu Server 24.04); if it POSTs and `deploy/scripts/check-host.sh`
   passes, it is the brain; (b) run brain and desk on one Pi 5 8 GB with a small model only

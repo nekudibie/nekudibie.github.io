@@ -222,8 +222,9 @@ such; **blocked** = waiting on something outside the code; **unimplemented** = n
    brain host. Plan in docs/HARDWARE.md ("Brain").
 
 ## Still open
-* Govee model numbers (H6xxx on each light), camera brand/model, whether any rescued board
-  POSTs. The ordered plan for Neku's next session, including the bench test and the brain
+* Parts identified from photos on 2026-10-04 (docs/HARDWARE.md): Ryzen 5 5600G, an 8 GB DDR4
+  SO-DIMM, Govee H6006 bulbs, a £10 i5-7200U laptop on its way. Open: whether an AM4 motherboard
+  exists, whether the Govee app offers LAN Control for H6006, the camera, and the laptop's RAM slots. The ordered plan for Neku's next session, including the bench test and the brain
   decision table, is docs/NEXT_STEPS.md.
 * The order extractor has only been tuned on one real inbox; expect more shop-specific
   patterns to be needed. Statuses shown for real orders have not been checked against the
