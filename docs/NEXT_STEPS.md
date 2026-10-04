@@ -136,21 +136,18 @@ with no pressure when aligned. Do not use the found USB stick for anything.
 
 ---
 
-## Block D: decide the brain (your call; nothing bought until you say)
+## Block D: the brain decision (made 2026-10-04)
 
-Read the measurements, then pick one:
+Neku has an AM4 board and a Ryzen 5 5600G but no desktop DDR4 and does not want to buy any,
+so that pair is shelved. Decision:
 
-| Result | Recommendation |
-|---|---|
-| A rescued board POSTs, has ≥16 GB RAM and `check-host.sh` passes | It is the brain. Go to Block E. |
-| A rescued board POSTs with 8 GB | It can be the **vault and Home Assistant** host (always on, low load). The brain stays on your PC for now. |
-| Nothing POSTs, and Block A3 gave ≥8 tokens/s on your PC | Keep your PC as the brain while you use it at the desk. Buy nothing yet. |
-| Nothing POSTs and your PC is too slow | Options, cheapest first: a second-hand small-form-factor office PC with 16 GB RAM (i5 8th gen or newer) is usually cheaper than a Pi 5 kit and far faster for a model. A Pi 5 8 GB is a fine **desk** computer but a weak brain. |
+| Role | Host | Notes |
+|---|---|---|
+| Brain while at the desk | Neku's Windows PC, Ollama inside WSL (Block A3) | Measure `eval rate` and record it. Record the PC's CPU/RAM/GPU from `dxdiag`. |
+| Always-on vault + Home Assistant | the £10 i5-7200U laptop with the 8 GB DDR4 SO-DIMM fitted | Battery doubles as a UPS. Also a slow small-model fallback when the PC is off. |
+| Shelved | AM4 board + 5600G | Becomes a fast brain only if desktop DDR4 and a PSU are ever added. Not assumed. |
 
-Tell me which row you are in and whether you want a shopping list. I will write one with
-exact part roles, but no prices or links until you ask, because they change.
-
----
+Block C (bench test) therefore does not apply for now.
 
 ## Block E: first real host install (software ready, 30 min once a host exists)
 

@@ -10,7 +10,7 @@ Status words used here: **confirmed** (Neku has it and it is identified), **unkn
 
 | Item | Status | Model / markings | Notes |
 |---|---|---|---|
-| CPU | confirmed | AMD Ryzen 5 5600G (AM4, 6c/12t, integrated graphics) | Strongest part owned. Needs an AM4 motherboard, DDR4 **desktop** DIMMs, a PSU and a cooler. **No AM4 board seen yet.** |
+| CPU | confirmed, **shelved by Neku's decision** | AMD Ryzen 5 5600G (AM4, 6c/12t, integrated graphics) | Strongest part owned, but needs DDR4 **desktop** DIMMs that Neku does not have and has decided not to buy. Kept for later; off the plan. |
 | CPU | confirmed, excluded | Intel Core i3-380M (2010 mobile, socket G1) | Too old and slow; no use here. |
 | RAM | confirmed | Samsung 8 GB DDR4 SO-DIMM PC4-2400T (M471A1K43CB1-CRC) | Laptop memory. Fits the incoming i5-7200U laptop; does **not** fit a desktop AM4 board. |
 | RAM | confirmed, excluded | Samsung 4 GB DDR3 DIMM PC3-12800U (M378B5273CH0-CK0) | DDR3 desktop; incompatible with Ryzen. |
@@ -19,7 +19,7 @@ Status words used here: **confirmed** (Neku has it and it is identified), **unkn
 | Laptop webcam module | confirmed, excluded | strip marked CUPAI13FF23000BC206759R2 | Internal ribbon-cable camera; not a usable camera for this project. |
 | SD card reader board | confirmed, excluded | DAG34ATH6D0 "Intel G34A" | Laptop daughterboard; no use. |
 | Smart lights | partly | Govee Smart LED Bulb **H6006**, B22, 1000 lm, 2700–6500 K (one photographed; three owned, assumed same model until confirmed) | Neku reports the Govee Home app shows **LAN Control** (switched on) and all three are the same model, so Home Assistant's local Govee integration should apply; to be confirmed when HA runs. Otherwise Govee cloud API via Home Assistant. |
-| Motherboard | confirmed exists, model unknown | AM4 (Neku confirms) | Model decides whether the 5600G needs a BIOS update first (B450/X470/A320 do; B550/A520 usually do not). Needs **long** DDR4 DIMMs, none seen yet, plus a cooler and PSU. |
+| Motherboard | confirmed exists, **shelved** | AM4 (model not recorded) | Unusable without desktop DDR4; see CPU row. |
 | HDDs/SSDs, PSU, spare screen | unknown | ? | Not yet photographed. |
 | Camera | unknown | ? | Not yet identified. |
 | Raspberry Pi (doorbell) | in use, excluded | model not recorded | Runs Neku's doorbell; leave it alone. |
@@ -49,10 +49,11 @@ on any board that boots; paste the output into this file.
   Raspberry Pi OS Lite + a minimal Wayland kiosk is an option later.
 
 ### Brain (model host)
-* 2026-10-04: a **Ryzen 5 5600G** was found in the salvage. With an AM4 board, 16 GB of DDR4
-  desktop memory and a PSU it would be a strong brain for 7–8B models. No board has been seen,
-  so the brain is still unconfirmed. The £10 i5-7200U laptop (with the 8 GB DDR4 SO-DIMM
-  fitted) is the interim brain for 3B-class models and the always-on vault host.
+* 2026-10-04 decision: a Ryzen 5 5600G and an AM4 board exist, but Neku has no desktop DDR4
+  and has chosen not to buy any, so that pair is shelved. **Brain = Neku's Windows PC (Ollama in
+  WSL) while it is on; the £10 i5-7200U laptop (with the 8 GB DDR4 SO-DIMM fitted) is the
+  always-on vault/Home Assistant host and a slow small-model fallback.** The PC's CPU, RAM and
+  GPU are not yet recorded; a GPU with ≥6 GB would make it a strong brain at no cost.
 * Earlier note: the old machines were already stripped for parts and may not boot, so there
   was **no confirmed brain host**. Options, in order of least spend: (a) try one
   board + CPU + matching RAM + a spare PSU on the bench first (needs a monitor, keyboard and
