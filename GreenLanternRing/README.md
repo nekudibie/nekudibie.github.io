@@ -23,8 +23,7 @@ terminals**, with no phone at checkout.
    optional experiment. → [`research/prepaid_card_feasibility.md`](research/prepaid_card_feasibility.md)
 2. **IDEMIA (Approach B): the right hardware, the wrong channel.** The Flybuy Mini FOB (SIM-size, about
    25 × 15 mm, antenna integrated, Visa and Mastercard certified) is sold to **issuers**. Samples carry
-   test keys that live terminals reject. Worth one polite personal enquiry, which is drafted here:
-   [`research/idemia_enquiry.md`](research/idemia_enquiry.md).
+   test keys that live terminals reject. Worth one polite personal enquiry (kept private, not in this repo).
 3. **Your Cash App Wand idea is the right *pattern*:** a small passive tag provisioned by the issuer and
    linked to an existing card. Cash App isn't available in the UK, so the UK equivalent is a **Curve-linked
    wearable activated through DIGISEQ Manage-Mii or Fidesmo Pay.**
@@ -56,7 +55,7 @@ below the £100–£240 for premium payment rings, and it includes the lighting,
 
 | Path | What |
 |---|---|
-| `research/` | Payment feasibility (A–E), decision matrix, antenna engineering, suppliers, IDEMIA enquiry, sources |
+| `research/` | Payment feasibility (A–E), decision matrix, antenna engineering, suppliers, sources |
 | `cad/` | Parametric OpenSCAD: ring body, retainer, bezel, lens, centre disc, diffuser, cartridge, insert holder, cradle, sizer, jigs ([README](cad/README.md)) |
 | `stl/` | Generated STLs: `design_A/B/C/`, `shared/` |
 | `electronics/` | Architecture, component choices, calculations (Python), schematics (SVG), wiring plan |

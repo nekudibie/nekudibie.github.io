@@ -63,7 +63,7 @@ which fees apply to purchases in GBP inside the UK. The fee may only apply to so
 | **Tappy** modules | Ring, strap and fob modules | Unknown | Complete | Visa and Mastercard | B2B, white label | Through the brand's app | NO-GO for individuals |
 
 **Conclusion B:** these are the *right* components, but for issuers and brands rather than for a single
-consumer. The IDEMIA enquiry ([`idemia_enquiry.md`](idemia_enquiry.md)) is a cheap, low-probability lead
+consumer. A personal enquiry to IDEMIA (kept private, not in this repo) is a cheap, low-probability lead
 worth one polite email, and it is not on the critical path.
 
 ## 4. Approach C: dismantle a cheap payment fob (snapshot prices)

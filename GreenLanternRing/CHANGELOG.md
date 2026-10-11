@@ -1,12 +1,14 @@
 # Changelog
 
+## v0.1.1 (2026-10-11)
+* Removed the IDEMIA enquiry draft from the public repository.
+
 ## v0.1 (2026-10-11): Phase 1 feasibility + first designs
 
 ### Research
 * Approaches A (card transplant), B (OEM module: IDEMIA, Infineon, Tappy, USC), C (fob teardown),
   D (intact payment ring as core), E (intact flat tag) researched and scored. **D selected, E fallback.**
 * Cash App Wand analysed as the reference pattern (an issuer-provisioned tag). Not available in the UK.
-* IDEMIA personal-capacity enquiry drafted, with a conflict-of-interest checklist.
 * Antenna engineering notes, with first-order calculators.
 
 ### CAD (OpenSCAD)
