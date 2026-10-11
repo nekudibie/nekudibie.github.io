@@ -1,0 +1,1064 @@
+{
+  "overrides": [],
+  "parts": [
+    {
+      "design": "A",
+      "part": "ring_body",
+      "file": "stl/design_A/ring_body.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 1986.6,
+      "mass_g_PETG": 2.52,
+      "bbox_mm": [
+        26.5,
+        33.7,
+        15.0
+      ],
+      "min_wall_mm_sampled": 0.39,
+      "wall_p2_mm": 0.6,
+      "overhang_share_45deg": 0.113
+    },
+    {
+      "design": "A",
+      "part": "retainer_cring",
+      "file": "stl/design_A/retainer_cring.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 80.0,
+      "mass_g_PETG": 0.1,
+      "bbox_mm": [
+        25.05,
+        24.88,
+        0.8
+      ],
+      "min_wall_mm_sampled": 0.41,
+      "wall_p2_mm": 0.8,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "A",
+      "part": "emblem_bezel",
+      "file": "stl/design_A/emblem_bezel.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 181.5,
+      "mass_g_PETG": 0.23,
+      "bbox_mm": [
+        18.0,
+        15.0,
+        1.0
+      ],
+      "min_wall_mm_sampled": 0.38,
+      "wall_p2_mm": 0.63,
+      "overhang_share_45deg": 0.008
+    },
+    {
+      "design": "A",
+      "part": "emblem_lens",
+      "file": "stl/design_A/emblem_lens.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 199.5,
+      "mass_g_PETG": 0.25,
+      "bbox_mm": [
+        15.36,
+        12.36,
+        1.9
+      ],
+      "min_wall_mm_sampled": 0.9,
+      "wall_p2_mm": 0.9,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "A",
+      "part": "emblem_center_disc",
+      "file": "stl/design_A/emblem_center_disc.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 14.1,
+      "mass_g_PETG": 0.02,
+      "bbox_mm": [
+        4.38,
+        4.38,
+        1.0
+      ],
+      "min_wall_mm_sampled": 0.3,
+      "wall_p2_mm": 0.3,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "A",
+      "part": "electronics_cartridge",
+      "file": "stl/design_A/electronics_cartridge.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 314.6,
+      "mass_g_PETG": 0.4,
+      "bbox_mm": [
+        15.2,
+        12.2,
+        5.1
+      ],
+      "min_wall_mm_sampled": 0.35,
+      "wall_p2_mm": 0.35,
+      "overhang_share_45deg": 0.015
+    },
+    {
+      "design": "A",
+      "part": "led_diffuser",
+      "file": "stl/design_A/led_diffuser.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 229.0,
+      "mass_g_PETG": 0.29,
+      "bbox_mm": [
+        15.36,
+        12.36,
+        1.4
+      ],
+      "min_wall_mm_sampled": 0.51,
+      "wall_p2_mm": 0.51,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "B",
+      "part": "ring_body",
+      "file": "stl/design_B/ring_body.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 2593.2,
+      "mass_g_PETG": 3.29,
+      "bbox_mm": [
+        26.9,
+        34.6,
+        17.0
+      ],
+      "min_wall_mm_sampled": 0.16,
+      "wall_p2_mm": 0.8,
+      "overhang_share_45deg": 0.119
+    },
+    {
+      "design": "B",
+      "part": "retainer_cring",
+      "file": "stl/design_B/retainer_cring.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 80.0,
+      "mass_g_PETG": 0.1,
+      "bbox_mm": [
+        25.05,
+        24.88,
+        0.8
+      ],
+      "min_wall_mm_sampled": 0.41,
+      "wall_p2_mm": 0.8,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "B",
+      "part": "emblem_bezel",
+      "file": "stl/design_B/emblem_bezel.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 273.9,
+      "mass_g_PETG": 0.35,
+      "bbox_mm": [
+        21.0,
+        17.0,
+        1.2
+      ],
+      "min_wall_mm_sampled": 0.45,
+      "wall_p2_mm": 0.83,
+      "overhang_share_45deg": 0.028
+    },
+    {
+      "design": "B",
+      "part": "emblem_lens",
+      "file": "stl/design_B/emblem_lens.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 332.0,
+      "mass_g_PETG": 0.42,
+      "bbox_mm": [
+        18.36,
+        14.36,
+        2.2
+      ],
+      "min_wall_mm_sampled": 1.0,
+      "wall_p2_mm": 1.0,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "B",
+      "part": "emblem_center_disc",
+      "file": "stl/design_B/emblem_center_disc.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 27.4,
+      "mass_g_PETG": 0.03,
+      "bbox_mm": [
+        5.48,
+        5.48,
+        1.2
+      ],
+      "min_wall_mm_sampled": 0.5,
+      "wall_p2_mm": 0.5,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "B",
+      "part": "electronics_cartridge",
+      "file": "stl/design_B/electronics_cartridge.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 540.2,
+      "mass_g_PETG": 0.69,
+      "bbox_mm": [
+        18.2,
+        14.2,
+        5.1
+      ],
+      "min_wall_mm_sampled": 0.29,
+      "wall_p2_mm": 0.35,
+      "overhang_share_45deg": 0.014
+    },
+    {
+      "design": "B",
+      "part": "led_diffuser",
+      "file": "stl/design_B/led_diffuser.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 476.5,
+      "mass_g_PETG": 0.61,
+      "bbox_mm": [
+        18.36,
+        14.36,
+        2.0
+      ],
+      "min_wall_mm_sampled": 1.11,
+      "wall_p2_mm": 1.11,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "C",
+      "part": "ring_body",
+      "file": "stl/design_C/ring_body.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 3244.8,
+      "mass_g_PETG": 4.12,
+      "bbox_mm": [
+        26.9,
+        36.4,
+        19.0
+      ],
+      "min_wall_mm_sampled": 0.13,
+      "wall_p2_mm": 0.8,
+      "overhang_share_45deg": 0.122
+    },
+    {
+      "design": "C",
+      "part": "retainer_cring",
+      "file": "stl/design_C/retainer_cring.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 80.0,
+      "mass_g_PETG": 0.1,
+      "bbox_mm": [
+        25.05,
+        24.88,
+        0.8
+      ],
+      "min_wall_mm_sampled": 0.41,
+      "wall_p2_mm": 0.8,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "C",
+      "part": "emblem_bezel",
+      "file": "stl/design_C/emblem_bezel.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 325.3,
+      "mass_g_PETG": 0.41,
+      "bbox_mm": [
+        23.0,
+        19.0,
+        1.2
+      ],
+      "min_wall_mm_sampled": 0.5,
+      "wall_p2_mm": 0.86,
+      "overhang_share_45deg": 0.028
+    },
+    {
+      "design": "C",
+      "part": "emblem_lens",
+      "file": "stl/design_C/emblem_lens.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 433.3,
+      "mass_g_PETG": 0.55,
+      "bbox_mm": [
+        20.36,
+        16.36,
+        2.2
+      ],
+      "min_wall_mm_sampled": 1.0,
+      "wall_p2_mm": 1.0,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "C",
+      "part": "emblem_center_disc",
+      "file": "stl/design_C/emblem_center_disc.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 37.2,
+      "mass_g_PETG": 0.05,
+      "bbox_mm": [
+        6.36,
+        6.36,
+        1.2
+      ],
+      "min_wall_mm_sampled": 0.5,
+      "wall_p2_mm": 0.5,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "C",
+      "part": "electronics_cartridge",
+      "file": "stl/design_C/electronics_cartridge.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 733.3,
+      "mass_g_PETG": 0.93,
+      "bbox_mm": [
+        20.2,
+        16.2,
+        6.1
+      ],
+      "min_wall_mm_sampled": 0.6,
+      "wall_p2_mm": 0.6,
+      "overhang_share_45deg": 0.009
+    },
+    {
+      "design": "C",
+      "part": "led_diffuser",
+      "file": "stl/design_C/led_diffuser.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 859.6,
+      "mass_g_PETG": 1.09,
+      "bbox_mm": [
+        20.36,
+        16.36,
+        2.8
+      ],
+      "min_wall_mm_sampled": 1.91,
+      "wall_p2_mm": 1.91,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "shared",
+      "part": "charging_cradle_base",
+      "file": "stl/shared/charging_cradle_base.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 43527.9,
+      "mass_g_PETG": 55.28,
+      "bbox_mm": [
+        64.0,
+        64.0,
+        30.35
+      ],
+      "min_wall_mm_sampled": 0.09,
+      "wall_p2_mm": 1.01,
+      "overhang_share_45deg": 0.106
+    },
+    {
+      "design": "shared",
+      "part": "charging_cradle_cover",
+      "file": "stl/shared/charging_cradle_cover.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 1798.2,
+      "mass_g_PETG": 2.28,
+      "bbox_mm": [
+        44.0,
+        28.0,
+        1.5
+      ],
+      "min_wall_mm_sampled": 0.62,
+      "wall_p2_mm": 1.32,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "shared",
+      "part": "ring_sizer_set",
+      "file": "stl/shared/ring_sizer_set.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 10,
+      "volume_mm3": 8055.8,
+      "mass_g_PETG": 10.23,
+      "bbox_mm": [
+        153.09,
+        52.9,
+        7.0
+      ],
+      "min_wall_mm_sampled": 0.25,
+      "wall_p2_mm": 1.6,
+      "overhang_share_45deg": 0.002
+    },
+    {
+      "design": "shared",
+      "part": "jig_coil_former",
+      "file": "stl/shared/jig_coil_former.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 1039.4,
+      "mass_g_PETG": 1.32,
+      "bbox_mm": [
+        24.5,
+        23.83,
+        7.0
+      ],
+      "min_wall_mm_sampled": 0.15,
+      "wall_p2_mm": 1.6,
+      "overhang_share_45deg": 0.05
+    },
+    {
+      "design": "shared",
+      "part": "jig_pancake_base",
+      "file": "stl/shared/jig_pancake_base.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 893.1,
+      "mass_g_PETG": 1.13,
+      "bbox_mm": [
+        24.0,
+        24.0,
+        2.25
+      ],
+      "min_wall_mm_sampled": 1.22,
+      "wall_p2_mm": 2.0,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "shared",
+      "part": "jig_pancake_top",
+      "file": "stl/shared/jig_pancake_top.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 850.4,
+      "mass_g_PETG": 1.08,
+      "bbox_mm": [
+        24.0,
+        24.0,
+        2.0
+      ],
+      "min_wall_mm_sampled": 2.0,
+      "wall_p2_mm": 2.0,
+      "overhang_share_45deg": 0.0
+    },
+    {
+      "design": "shared",
+      "part": "payment_insert_holder_B_insert_mode",
+      "file": "stl/shared/payment_insert_holder_B_insert_mode.stl",
+      "watertight": true,
+      "winding_consistent": true,
+      "bodies": 1,
+      "volume_mm3": 193.7,
+      "mass_g_PETG": 0.25,
+      "bbox_mm": [
+        18.36,
+        14.36,
+        1.4
+      ],
+      "min_wall_mm_sampled": 0.6,
+      "wall_p2_mm": 0.6,
+      "overhang_share_45deg": 0.0
+    }
+  ],
+  "assembly": {
+    "A": [
+      {
+        "a": "body",
+        "b": "retainer",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "cartridge",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "diffuser",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "cartridge",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "diffuser",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "diffuser",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "lens",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "lens",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "lens",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "bezel",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "bezel",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "center",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      }
+    ],
+    "B": [
+      {
+        "a": "body",
+        "b": "retainer",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "cartridge",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "diffuser",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "cartridge",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "diffuser",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "diffuser",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "lens",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "lens",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "lens",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "bezel",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "bezel",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "center",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      }
+    ],
+    "C": [
+      {
+        "a": "body",
+        "b": "retainer",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "cartridge",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "diffuser",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "body",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "cartridge",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "diffuser",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "retainer",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "diffuser",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "cartridge",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "lens",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "diffuser",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "lens",
+        "b": "bezel",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "lens",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "lens",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "bezel",
+        "b": "center",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "bezel",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      },
+      {
+        "a": "center",
+        "b": "core",
+        "overlap_mm3": 0.0,
+        "pass": true
+      }
+    ],
+    "cradle_B": [
+      {
+        "a": "cradle",
+        "b": "ring",
+        "overlap_mm3": 0.0,
+        "pass": true
+      }
+    ]
+  },
+  "derived": {
+    "A": {
+      "outer_top_y_mm": 21.45,
+      "finger_radius_mm": 9.5,
+      "height_above_finger_mm": 11.95,
+      "band_bottom_thickness_mm": 3.75,
+      "head_extent_xz_mm": [
+        26.5,
+        15.0
+      ],
+      "printed_mass_g_PETG": 3.82
+    },
+    "B": {
+      "outer_top_y_mm": 22.35,
+      "finger_radius_mm": 9.5,
+      "height_above_finger_mm": 12.85,
+      "band_bottom_thickness_mm": 3.95,
+      "head_extent_xz_mm": [
+        26.9,
+        17.0
+      ],
+      "printed_mass_g_PETG": 5.49
+    },
+    "C": {
+      "outer_top_y_mm": 24.15,
+      "finger_radius_mm": 9.5,
+      "height_above_finger_mm": 14.65,
+      "band_bottom_thickness_mm": 3.95,
+      "head_extent_xz_mm": [
+        26.9,
+        19.0
+      ],
+      "printed_mass_g_PETG": 7.26
+    }
+  }
+}

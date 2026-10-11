@@ -1,0 +1,14 @@
+date,test_id,phase,configuration,measured_value,units,pass_criterion,result,operator,notes
+2026-10-11,CAD-01,4,v0.1 designs A/B/C + shared,28/28 watertight,,all watertight,PASS,automated (build_and_verify.py),see cad_verification.json
+2026-10-11,CAD-02,4,assemblies A/B/C incl. dummy core; ring-in-cradle B,0.000,mm3 (max pair overlap),<0.05,PASS,automated,
+2026-10-11,CAD-03,4,v0.1,A:ring_body=0.6; A:emblem_bezel=0.63; A:emblem_center_disc=0.3; A:electronics_cartridge=0.35; A:led_diffuser=0.51; B:emblem_center_disc=0.5; B:electronics_cartridge=0.35; C:emblem_center_disc=0.5; C:electronics_cartridge=0.6; shared:payment_insert_holder_B_insert_mode=0.6,mm (2nd-percentile sampled wall),>=0.8 for FDM,OPEN,automated,Print these in resin or thicken in v0.2
+2026-10-11,CAD-04,4,design A,11.95 above finger; 3.82 g printed,mm / g,record,INFO,automated,"Provisional finger 19.0, core 2.3x7.0"
+2026-10-11,CAD-04,4,design B,12.85 above finger; 5.49 g printed,mm / g,record,INFO,automated,"Provisional finger 19.0, core 2.3x7.0"
+2026-10-11,CAD-04,4,design C,14.65 above finger; 7.26 g printed,mm / g,record,INFO,automated,"Provisional finger 19.0, core 2.3x7.0"
+,MECH-01,,,,,see test_plan.md,NOT RUN,,
+,P1-03,,,,,see test_plan.md,NOT RUN,,
+,PAY-01,,,,,see test_plan.md,NOT RUN,,
+,ANT-01,,,,,see test_plan.md,NOT RUN,,
+,LED-01,,,,,see test_plan.md,NOT RUN,,
+,CHG-01,,,,,see test_plan.md,NOT RUN,,
+2026-10-11,E-03,4,design A,battery envelope 10x10x3,,cell >=30 mAh,OPEN,,Too small for 0.5C at 15 mA charge
